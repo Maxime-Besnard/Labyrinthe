@@ -9,7 +9,7 @@
 #include "G2D.h"
 
 bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur2, int largeur2);
- 
+int rand_direction();
  
 using namespace std;
 
@@ -81,6 +81,31 @@ struct _Chest {
 	V2 Pos = V2(35,120);
 };
 
+struct _Momie
+{
+	string texture =
+		"[      PPPPPP     ]"
+		"[     PPPPPPPP    ]"
+		"[    PPPPPPPPPP   ]"
+		"[    PPPPPPPPPP   ]"
+		"[    P     PPPP   ]"
+		"[    PPW WPPPPP   ]"
+		"[     PPPPPPPP    ]"
+		"[      PPPPPP     ]"
+		"[       PPPPPP    ]"
+		"[    PPPPPPPPP    ]"
+		"[   PPPPPPPPPP    ]"
+		"[   PPPPPPPPPP    ]"
+		"[   PP  PPPPP     ]"
+		"[       PPPPP     ]"
+		"[       PPPPP     ]"
+		"[      PP PPP     ]";
+
+	V2 Size;
+	int IdTex;
+	V2 Pos;
+};
+
 
 struct GameData
 {
@@ -110,8 +135,12 @@ struct GameData
 	_Heros Heros;   // data du héros
 	_Key   Key;
 	_Chest Chest;
-
+	_Momie M1;
+	_Momie M2;
+	_Momie M3;
+	_Momie Momies_tab[3];
 	GameData() {}
+	int direction_init = 2;
 
 };
 
@@ -138,13 +167,19 @@ void render()
 	// affichage de la clef
 	G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
 	G2D::DrawRectWithTexture(G.Chest.IdTex, G.Chest.Pos, G.Chest.Size);
+	G2D::DrawRectWithTexture(G.M1.IdTex, G.M1.Pos, G.M1.Size);
+	G2D::DrawRectWithTexture(G.M2.IdTex, G.M2.Pos, G.M2.Size);
+	G2D::DrawRectWithTexture(G.M3.IdTex, G.M3.Pos, G.M3.Size);
 
-	/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
+	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40)) * 40, (int(G.Heros.Pos.y / 40) - 1) * 40), V2(40, 40), Color::Red);
-	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40)) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);*/
+	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40)) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
+	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
+	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
 
-	 
+
+	G2D::DrawRectangle(G.M1.Pos, G.M1.Size, Color::Red);
 	  
 	G2D::Show();
 }
@@ -154,22 +189,59 @@ void Logic()
 {
 	//Déplacements et collisions avec les murs
 
-	if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x/40) - 1)*40, int(G.Heros.Pos.y/40)*40, 40, 40)) && G.Mur((G.Heros.Pos.x /40) - 1, G.Heros.Pos.y/40)) {}
+	if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x/40) - 1)*40, int(G.Heros.Pos.y/40)*40, 40, 40)) && G.Mur((G.Heros.Pos.x /40) - 1, G.Heros.Pos.y/40) || (G.Mur((G.Heros.Pos.x / 40) - 1, (G.Heros.Pos.y / 40) + 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40)))) ) {}
 	else {
 		if (G2D::IsKeyPressed(Key::LEFT))  G.Heros.Pos.x--;
 	}
-	if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x/40) + 1)*40, int(G.Heros.Pos.y/40)*40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40))) {}
+	if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x/40) + 1)*40, int(G.Heros.Pos.y/40)*40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40)) || (G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40)+1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40)))) ) {}
 	else{
 		if (G2D::IsKeyPressed(Key::RIGHT)) G.Heros.Pos.x++;
 	}
-	if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, int(G.Heros.Pos.x/40)*40, (int(G.Heros.Pos.y/40) + 1)*40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40), (G.Heros.Pos.y / 40) + 1)) {}
+	if (((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, int(G.Heros.Pos.x/40)*40, (int(G.Heros.Pos.y/40) + 1)*40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40), (G.Heros.Pos.y / 40) + 1)) || (G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40) + 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40))))) {}
 	else {
 		if (G2D::IsKeyPressed(Key::UP))    G.Heros.Pos.y++;
 	}
-	if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, int(G.Heros.Pos.x/40)*40, (int(G.Heros.Pos.y/40) - 1)*40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40), (G.Heros.Pos.y / 40) - 1)) {}
+	if (((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, int(G.Heros.Pos.x/40)*40, (int(G.Heros.Pos.y/40) - 1)*40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40), (G.Heros.Pos.y / 40) - 1)) || (G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40) - 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40 - 1) * 40, 40, 40))))) {}
 	else{
 		if (G2D::IsKeyPressed(Key::DOWN))  G.Heros.Pos.y--;
 	}
+
+
+	// Déplacement Momie
+	
+	if ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) - 1) * 40, int(G.M1.Pos.y / 40) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40) - 1, G.M1.Pos.y / 40) || (G.Mur((G.M1.Pos.x / 40) - 1, (G.M1.Pos.y / 40) + 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) - 1) * 40, int(G.M1.Pos.y / 40 + 1) * 40, 40, 40)))))
+	{
+		G.M1.Pos.x++;
+		G.direction_init = rand_direction();
+	}
+	else {
+		if (G.direction_init==0) { { G.M1.Pos.x--;} }
+	}
+	if ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40)) || (G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40) + 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40 + 1) * 40, 40, 40)))))
+	{
+		G.M1.Pos.x--;
+		G.direction_init = rand_direction();
+	}
+	else {
+		if (G.direction_init==1) { { G.M1.Pos.x++; } }
+	}
+	if (((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, int(G.M1.Pos.x / 40) * 40, (int(G.M1.Pos.y / 40) + 1) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40), (G.M1.Pos.y / 40) + 1)) || (G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40) + 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40 + 1) * 40, 40, 40)))))
+	{
+		G.M1.Pos.y--;
+		G.direction_init = rand_direction();
+	}
+	else {
+		if (G.direction_init == 2) { { G.M1.Pos.y++; } }
+	}
+	if (((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, int(G.M1.Pos.x / 40) * 40, (int(G.M1.Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40), (G.M1.Pos.y / 40) - 1)) || (G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40) - 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40 - 1) * 40, 40, 40)))))
+	{
+		G.M1.Pos.y++;
+		G.direction_init = rand_direction();
+	}
+	else {
+		if (G.direction_init==3) {{ G.M1.Pos.y--; } }
+	}
+	
 
 	//Collision avec la clef
 
@@ -185,8 +257,8 @@ void Logic()
 		G.Chest.Size = V2(0, 0);
 	}
 
-	std::cout << InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Key.Pos.x, G.Key.Pos.y, G.Key.Size.y, G.Key.Size.x) << " ; ";
-	std::cout << G.Heros.Inventaire.Key << "\n";
+	//std::cout << InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Key.Pos.x, G.Key.Pos.y, G.Key.Size.y, G.Key.Size.x) << " ; ";
+	//std::cout << G.Heros.Inventaire.Key << "\n";
 
 }
  
@@ -202,7 +274,18 @@ void AssetsInit()
 
    G.Chest.IdTex = G2D::InitTextureFromString(G.Chest.Size, G.Chest.texture);
    G.Chest.Size = G.Chest.Size * 2;
+   
+   G.Momies_tab[0].IdTex = G2D::InitTextureFromString(G.Momies_tab[0].Size, G.Momies_tab[0].texture);
+   G.Momies_tab[0].Size = G.Momies_tab[0].Size * 1.5;
+   G.Momies_tab[0].Pos = V2(45, 240);
 
+   G.Momies_tab[1].IdTex = G2D::InitTextureFromString(G.Momies_tab[1].Size, G.Momies_tab[1].texture);
+   G.Momies_tab[1].Size = G.Momies_tab[1].Size * 1.5;
+   G.Momies_tab[1].Pos = V2(200, 240);
+
+   G.Momies_tab[2].IdTex = G2D::InitTextureFromString(G.Momies_tab[2].Size, G.Momies_tab[2].texture);
+   G.Momies_tab[2].Size = G.Momies_tab[2].Size * 1.5;
+   G.Momies_tab[2].Pos = V2(320, 240);
 }
 
 int main(int argc, char* argv[])
@@ -232,6 +315,10 @@ bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur
 	}
 
 	return true;
+}
+
+int rand_direction(){
+	return rand() % 4;
 }
   
  
