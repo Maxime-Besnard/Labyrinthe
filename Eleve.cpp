@@ -39,6 +39,7 @@ struct _Heros
 	V2 Pos = V2(45,45);
 	int hauteur = 11;
 	int largeur = 5;
+	int vies = 3;
 
 	_Inventaire Inventaire;
 };
@@ -125,7 +126,7 @@ struct GameData
 				 "M M M  M M M  M"
 				 "M M M MM M MMMM"
 				 "M M M    M    M"
-				 "M M M MMMMMMM M"
+				 "M   M MMMMMMM M"
 				 "M M      M    M"
 				 "MMMMMMMMMMMMMMM";
 
@@ -166,6 +167,7 @@ void render()
 
 	//Partie en cours
 	if (G.Ecran == 1) {
+
 		for (int x = 0; x < 15; x++)
 			for (int y = 0; y < 15; y++)
 			{
@@ -174,6 +176,10 @@ void render()
 				if (G.Mur(x, y))
 					G2D::DrawRectangle(V2(xx, yy), V2(G.Lpix, G.Lpix), Color::Blue, true);
 			}
+
+		//Affichage des vies restantes
+		G2D::DrawStringFontMono(V2(40, 570), "Vies : " + std::to_string(G.Heros.vies), 20, 2, Color::Red);
+
 
 		// affichage du héro avec boite englobante et zoom x 2
 		G2D::DrawRectangle(G.Heros.Pos, G.Heros.Size, Color::Red);
@@ -194,11 +200,18 @@ void render()
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40)) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);*/
+
 	}
 
 	//Partie gagnée
 	if (G.Ecran == 2) {
 		G2D::DrawStringFontMono(V2(100, 300), "WIN", 60, 4, Color::Green);
+		G2D::DrawRectangle(V2(0, 0), V2(0, 0), Color::Black, true);
+	}
+
+	//Partie perdue
+	if (G.Ecran == 3) {
+		G2D::DrawStringFontMono(V2(100, 300), "GAME OVER", 60, 4, Color::Red);
 		G2D::DrawRectangle(V2(0, 0), V2(0, 0), Color::Black, true);
 	}
 	  
@@ -269,6 +282,15 @@ void Logic()
 			G.time = G2D::ElapsedTimeFromStartSeconds();
 		}
 
+		//Collision avec la momie
+		for (int i = 0; i < 3; i++) {
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Momies_tab[i].Pos.x, G.Momies_tab[i].Pos.y, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x)) {
+				G.Heros.vies -= 1;
+				G.Heros.Pos = V2(45, 45);
+			}
+
+		}
+
 		// Déplacement des Momies
 		for (int i = 0; i < 3; i++) {
 
@@ -308,11 +330,24 @@ void Logic()
 				if (G.direction_init[i] == 3) { { G.Momies_tab[i].Pos.y--; } }
 			}
 		}
+
+		//Détection du game over
+		if (G.Heros.vies < 1) {
+			G.Ecran = 3;
+			G.time = G2D::ElapsedTimeFromStartSeconds();
+		}
 	}
 
 	//Partie gagnée
 	if (G.Ecran == 2) {
-		//std::cout << G2D::ElapsedTimeFromStartSeconds() << "\n";
+
+		if (G2D::ElapsedTimeFromStartSeconds() - G.time > 3) {
+			G.Ecran = 0;
+		}
+	}
+
+	//Partie perdue
+	if (G.Ecran == 3) {
 
 		if (G2D::ElapsedTimeFromStartSeconds() - G.time > 3) {
 			G.Ecran = 0;
