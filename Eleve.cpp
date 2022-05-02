@@ -10,6 +10,7 @@
 
 bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur2, int largeur2);
 int rand_direction();
+
  
 using namespace std;
 
@@ -106,6 +107,7 @@ struct _Momie
 	V2 Pos;
 };
 
+void moveMomie(_Momie momie);
 
 struct GameData
 {
@@ -135,12 +137,9 @@ struct GameData
 	_Heros Heros;   // data du héros
 	_Key   Key;
 	_Chest Chest;
-	_Momie M1;
-	_Momie M2;
-	_Momie M3;
 	_Momie Momies_tab[3];
 	GameData() {}
-	int direction_init = 2;
+	int direction_init[3] = { 2,1,3 };
 
 };
 
@@ -167,9 +166,9 @@ void render()
 	// affichage de la clef
 	G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
 	G2D::DrawRectWithTexture(G.Chest.IdTex, G.Chest.Pos, G.Chest.Size);
-	G2D::DrawRectWithTexture(G.M1.IdTex, G.M1.Pos, G.M1.Size);
-	G2D::DrawRectWithTexture(G.M2.IdTex, G.M2.Pos, G.M2.Size);
-	G2D::DrawRectWithTexture(G.M3.IdTex, G.M3.Pos, G.M3.Size);
+	G2D::DrawRectWithTexture(G.Momies_tab[0].IdTex, G.Momies_tab[0].Pos, G.Momies_tab[0].Size);
+	G2D::DrawRectWithTexture(G.Momies_tab[1].IdTex, G.Momies_tab[1].Pos, G.Momies_tab[1].Size);
+	G2D::DrawRectWithTexture(G.Momies_tab[2].IdTex, G.Momies_tab[2].Pos, G.Momies_tab[2].Size);
 
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -179,7 +178,7 @@ void render()
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
 
 
-	G2D::DrawRectangle(G.M1.Pos, G.M1.Size, Color::Red);
+	G2D::DrawRectangle(G.Momies_tab[0].Pos, G.Momies_tab[0].Size, Color::Red);
 	  
 	G2D::Show();
 }
@@ -208,39 +207,41 @@ void Logic()
 
 
 	// Déplacement Momie
-	
-	if ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) - 1) * 40, int(G.M1.Pos.y / 40) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40) - 1, G.M1.Pos.y / 40) || (G.Mur((G.M1.Pos.x / 40) - 1, (G.M1.Pos.y / 40) + 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) - 1) * 40, int(G.M1.Pos.y / 40 + 1) * 40, 40, 40)))))
-	{
-		G.M1.Pos.x++;
-		G.direction_init = rand_direction();
+	for (int i = 0; i <3; i++) {
+		if ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) - 1) * 40, int(G.Momies_tab[i].Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40) - 1, G.Momies_tab[i].Pos.y / 40) || (G.Mur((G.Momies_tab[i].Pos.x / 40) - 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) - 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
+		{
+			G.Momies_tab[i].Pos.x++;
+			G.direction_init[i] = rand_direction();
+		}
+		else {
+			if (G.direction_init[i] == 0) { { G.Momies_tab[i].Pos.x--;} }
+		}
+		if ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
+		{
+			G.Momies_tab[i].Pos.x--;
+			G.direction_init[i] = rand_direction();
+		}
+		else {
+			if (G.direction_init[i] == 1) { { G.Momies_tab[i].Pos.x++; } }
+		}
+		if (((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, int(G.Momies_tab[i].Pos.x / 40) * 40, (int(G.Momies_tab[i].Pos.y / 40) + 1) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40), (G.Momies_tab[i].Pos.y / 40) + 1)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
+		{
+			G.Momies_tab[i].Pos.y--;
+			G.direction_init[i] = rand_direction();
+		}
+		else {
+			if (G.direction_init[i] == 2) { { G.Momies_tab[i].Pos.y++; } }
+		}
+		if (((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, int(G.Momies_tab[i].Pos.x / 40) * 40, (int(G.Momies_tab[i].Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40), (G.Momies_tab[i].Pos.y / 40) - 1)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) - 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 - 1) * 40, 40, 40)))))
+		{
+			G.Momies_tab[i].Pos.y++;
+			G.direction_init[i] = rand_direction();
+		}
+		else {
+			if (G.direction_init[i] == 3) { { G.Momies_tab[i].Pos.y--; } }
+		}
 	}
-	else {
-		if (G.direction_init==0) { { G.M1.Pos.x--;} }
-	}
-	if ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40)) || (G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40) + 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40 + 1) * 40, 40, 40)))))
-	{
-		G.M1.Pos.x--;
-		G.direction_init = rand_direction();
-	}
-	else {
-		if (G.direction_init==1) { { G.M1.Pos.x++; } }
-	}
-	if (((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, int(G.M1.Pos.x / 40) * 40, (int(G.M1.Pos.y / 40) + 1) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40), (G.M1.Pos.y / 40) + 1)) || (G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40) + 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40 + 1) * 40, 40, 40)))))
-	{
-		G.M1.Pos.y--;
-		G.direction_init = rand_direction();
-	}
-	else {
-		if (G.direction_init == 2) { { G.M1.Pos.y++; } }
-	}
-	if (((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, int(G.M1.Pos.x / 40) * 40, (int(G.M1.Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((G.M1.Pos.x / 40), (G.M1.Pos.y / 40) - 1)) || (G.Mur((G.M1.Pos.x / 40) + 1, (G.M1.Pos.y / 40) - 1) && ((InterRectRect(G.M1.Pos, G.M1.Size.y, G.M1.Size.x, (int(G.M1.Pos.x / 40) + 1) * 40, int(G.M1.Pos.y / 40 - 1) * 40, 40, 40)))))
-	{
-		G.M1.Pos.y++;
-		G.direction_init = rand_direction();
-	}
-	else {
-		if (G.direction_init==3) {{ G.M1.Pos.y--; } }
-	}
+
 	
 
 	//Collision avec la clef
@@ -256,9 +257,6 @@ void Logic()
 		G.Heros.Inventaire.Key = false;
 		G.Chest.Size = V2(0, 0);
 	}
-
-	//std::cout << InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Key.Pos.x, G.Key.Pos.y, G.Key.Size.y, G.Key.Size.x) << " ; ";
-	//std::cout << G.Heros.Inventaire.Key << "\n";
 
 }
  
@@ -320,5 +318,3 @@ bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur
 int rand_direction(){
 	return rand() % 4;
 }
-  
- 
