@@ -107,6 +107,25 @@ struct _Momie
 	V2 Pos;
 };
 
+struct _Pistolet
+{
+	string texture =
+		"[  MMMMMMMMMMMGGMM   ]"
+		"[  MMMMMMMMMMMMMMMM  ]"
+		"[  MMMMMMMMMMMMMGMG  ]"
+		"[  GGGGGGGGMGGGGGGG  ]"
+		"[          G  GGPG   ]"
+		"[           GGGPPPG  ]"
+		"[              GPPPG ]"
+		"[               GPPG ]"
+		"[               GGG  ]";
+
+	V2 Size;
+	int IdTex;
+	V2 Pos = V2(45, 320);
+
+};
+
 void moveMomie(_Momie momie);
 
 struct GameData
@@ -138,6 +157,7 @@ struct GameData
 	_Key   Key;
 	_Chest Chest;
 	_Momie Momies_tab[3];
+	_Pistolet Pistolet;
 	GameData() {}
 	int direction_init[3] = { 2,1,3 };
 
@@ -176,6 +196,8 @@ void render()
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40)) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
 	G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40), V2(40, 40), Color::Red);
+
+	G2D::DrawRectWithTexture(G.Pistolet.IdTex,G.Pistolet.Pos, G.Pistolet.Size);
 
 
 	G2D::DrawRectangle(G.Momies_tab[0].Pos, G.Momies_tab[0].Size, Color::Red);
@@ -284,6 +306,9 @@ void AssetsInit()
    G.Momies_tab[2].IdTex = G2D::InitTextureFromString(G.Momies_tab[2].Size, G.Momies_tab[2].texture);
    G.Momies_tab[2].Size = G.Momies_tab[2].Size * 1.5;
    G.Momies_tab[2].Pos = V2(320, 240);
+
+   G.Pistolet.IdTex = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture);
+   G.Pistolet.Size = G.Pistolet.Size*1; // on peut zoomer la taille du sprite
 }
 
 int main(int argc, char* argv[])
