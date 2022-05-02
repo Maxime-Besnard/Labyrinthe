@@ -22,7 +22,7 @@ struct _Inventaire {
  
 struct _Heros
 {
-	string texture_1 =
+	string texture_droite =
 		"[RRR  ]"
 		"[RRWR ]"
 		"[RRR  ]"
@@ -34,7 +34,7 @@ struct _Heros
 		"[CC   ]"
 		"[C C  ]"
 		"[C C  ]";
-	string texture_2 =
+	string texture_droite2 =
 		"[RRR  ]"
 		"[RRWR ]"
 		"[RRR  ]"
@@ -46,9 +46,35 @@ struct _Heros
 		"[CC   ]"
 		"[CC   ]"
 		"[CC   ]";
+	string texture_gauche =
+		"[  RRR]"
+		"[ RWRR]"
+		"[  RRR]"
+		"[   YY]"
+		"[  YYY]"
+		"[GY YY]"
+		"[   GG]"
+		"[   CC]"
+		"[   CC]"
+		"[  C C]"
+		"[  C C]";
+	string texture_gauche2 =
+		"[  RRR]"
+		"[ RWRR]"
+		"[  RRR]"
+		"[   YY]"
+		"[  YYY]"
+		"[GY YY]"
+		"[   GG]"
+		"[   CC]"
+		"[   CC]"
+		"[   CC]"
+		"[   CC]";
 	V2 Size;
-	int IdTex1;
-	int IdTex2;
+	int IdTexDroite;
+	int IdTexDroite2;
+	int IdTexGauche;
+	int IdTexGauche2;
 	V2 Pos = V2(45,45);
 	int hauteur = 11;
 	int largeur = 5;
@@ -157,6 +183,7 @@ struct GameData
 	int time = 0;
 
 	int n_frame = 0;
+	int last_direction = 1; // 0 : left | 1:right
 
 	GameData() {}
 
@@ -191,17 +218,47 @@ void render()
 		// affichage du héro avec boite englobante et zoom x 2
 		G2D::DrawRectangle(G.Heros.Pos, G.Heros.Size, Color::Red);
 		//G2D::DrawRectWithTexture(G.Heros.IdTex1, G.Heros.Pos, G.Heros.Size);
-		if (G2D::IsKeyPressed(Key::LEFT) || G2D::IsKeyPressed(Key::RIGHT) || G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::DOWN)) {
+		if (G2D::IsKeyPressed(Key::RIGHT)) {
 			if (G.n_frame % 30 < 15) {
-				G2D::DrawRectWithTexture(G.Heros.IdTex1, G.Heros.Pos, G.Heros.Size);
+				G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
 			}
 			else {
-				G2D::DrawRectWithTexture(G.Heros.IdTex2, G.Heros.Pos, G.Heros.Size);
+				G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size);
+			}
+			G.last_direction = 1;
+		}
+		else if (G2D::IsKeyPressed(Key::LEFT)) {
+			if (G.n_frame % 30 < 15) {
+				G2D::DrawRectWithTexture(G.Heros.IdTexGauche, G.Heros.Pos, G.Heros.Size);
+			}
+			else {
+				G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size);
+			}
+			G.last_direction = 0;
+		}
+		if (G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::DOWN)) {
+			if (G.last_direction == 1) {
+				if (G.n_frame % 30 < 15) {
+					G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
+				}
+				else {
+					G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size);
+				}
+			}
+			else {
+				if (G.n_frame % 30 < 15) {
+					G2D::DrawRectWithTexture(G.Heros.IdTexGauche, G.Heros.Pos, G.Heros.Size);
+				}
+				else {
+					G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size);
+				}
 			}
 		}
 		else {
-			G2D::DrawRectWithTexture(G.Heros.IdTex1, G.Heros.Pos, G.Heros.Size);
+			if (G.last_direction == 1) { G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size); }
+			else { G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size); }
 		}
+
 		
 
 		// affichage de la clef
@@ -351,8 +408,10 @@ void Logic()
 void AssetsInit()
 {
    // Size passé en ref et texture en param
-   G.Heros.IdTex1 = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_1);
-   G.Heros.IdTex2 = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_2);
+   G.Heros.IdTexDroite = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_droite);
+   G.Heros.IdTexDroite2 = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_droite2);
+   G.Heros.IdTexGauche = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_gauche);
+   G.Heros.IdTexGauche2 = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_gauche2);
    G.Heros.Size  = G.Heros.Size  * 2; // on peut zoomer la taille du sprite
 
    G.Key.IdTex   = G2D::InitTextureFromString(G.Key.Size, G.Key.texture);
