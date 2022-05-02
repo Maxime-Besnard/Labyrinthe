@@ -167,6 +167,28 @@ struct _Pistolet
 	V2 Pos = V2(500, 45);
 };
 
+struct _Diamand
+{
+	string texture =
+		"[   WWWWWWWWWWW   ]"
+		"[  WCCCWCCCWCCCW  ]"
+		"[ WCCCWCCCCCWCCCW ]"
+		"[WCCCWCCCCCCCWCCCW]"
+		"[WWWWWWWWWWWWWWWWW]"
+		"[ WCCWCCCCCCCWCCW ]"
+		"[  WCCWCCCCCWCCW  ]"
+		"[   WCCWCCCWCCW   ]"
+		"[    WCCWCWCCW    ]"
+		"[     WCCWCCW     ]"
+		"[      WCCCW      ]"
+		"[       WCW       ]"
+		"[        W        ]";
+
+	V2 Size;
+	int IdTex;
+	V2 Pos = V2(450, 130);
+};
+
 
 struct GameData
 {
@@ -206,6 +228,8 @@ struct GameData
 	int last_direction = 1; // 0 : left | 1:right
 
 	_Pistolet Pistolet;
+
+	_Diamand Diamand;
 
 	GameData() {}
 
@@ -297,6 +321,9 @@ void render()
 
 		// Affichage Pistolet
 		G2D::DrawRectWithTexture(G.Pistolet.IdTex, G.Pistolet.Pos, G.Pistolet.Size);
+
+		//Affichage Dimand
+		G2D::DrawRectWithTexture(G.Diamand.IdTex, G.Diamand.Pos, G.Diamand.Size);
 		
 		/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -490,6 +517,9 @@ void AssetsInit()
 
    G.Pistolet.IdTex = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture);
    G.Pistolet.Size = G.Pistolet.Size * 1;
+
+   G.Diamand.IdTex = G2D::InitTextureFromString(G.Diamand.Size, G.Diamand.texture);
+   G.Diamand.Size = G.Diamand.Size * 1;
 }
 
 int main(int argc, char* argv[])
