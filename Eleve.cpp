@@ -229,7 +229,7 @@ void render()
 				G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
 			}
 			else {
-				//G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size);
+				G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size);
 			}
 			G.last_direction = 1;
 		}
@@ -242,7 +242,7 @@ void render()
 			}
 			G.last_direction = 0;
 		}
-		if (G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::DOWN)) {
+		else if (G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::DOWN)) {
 			if (G.last_direction == 1) {
 				if (G.n_frame % 30 < 15) {
 					G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
