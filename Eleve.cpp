@@ -11,13 +11,22 @@
 bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur2, int largeur2);
 void AssetsInit();
 int rand_direction();
+bool isPorteClosed(int x, int y);
+bool isCollisionGauche(int x, int y, int sizex, int sizey);
+bool isCollisionDroite(int x, int y, int sizex, int sizey);
+bool isCollisionHaut(int x, int y, int sizex, int sizey);
+bool isCollisionBas(int x, int y, int sizex, int sizey);
+int frameBeforeSpawn();
+
  
 using namespace std;
 
 struct _Inventaire {
 
-	bool Key = false;
-
+	bool Key;
+	bool Munition;
+	bool Pistolet;
+	bool Diamant;
 };
  
 struct _Heros
@@ -76,10 +85,11 @@ struct _Heros
 	int IdTexDroite2;
 	int IdTexGauche;
 	int IdTexGauche2;
-	V2 Pos = V2(45,45);
+	V2 Pos;
 	int hauteur = 11;
 	int largeur = 5;
-	int vies = 3;
+	int vies;
+	int last_direction; // 0 : left | 1 : right
 
 	_Inventaire Inventaire;
 };
@@ -97,7 +107,7 @@ struct _Key
 
 	V2 Size;
 	int IdTex;
-	V2 Pos = V2(40, 200);
+	V2 Pos;
 };
 
 struct _Chest {
@@ -120,7 +130,7 @@ struct _Chest {
 
 	V2 Size;
 	int IdTex;
-	V2 Pos = V2(35,120);
+	V2 Pos;
 };
 
 struct _Momie
@@ -144,14 +154,51 @@ struct _Momie
 		"[        PPPPP         ]"
 		"[       PP PPP         ]";
 
+	V2 Pos;
 	V2 Size;
 	int IdTex;
-	V2 Pos = V2(35, 240);
+	int direction;
+	bool active;
+};
+
+struct _Munition {
+
+	string texture_droite =
+		"[KKKKKKKKKKKKKK    ]"
+		"[KOOROOOOOOOORKK   ]"
+		"[KOOROOOOOOOOROOK  ]"
+		"[KOOROOOOOOOOROOOK ]"
+		"[KOOROOOOOOOOROOOOK]"
+		"[KOOROOOOOOOOROOOOK]"
+		"[KOOROOOOOOOOROOOK ]"
+		"[KOOROOOOOOOOROOK  ]"
+		"[KOOROOOOOOOORKK   ]"
+		"[KKKKKKKKKKKKKK    ]";
+
+	string texture_gauche =
+		"[    KKKKKKKKKKKKKK]"
+		"[   KKROOOOOOOOROOK]"
+		"[  KOOROOOOOOOOROOK]" 
+		"[ KOOOROOOOOOOOROOK]"
+		"[KOOOOROOOOOOOOROOK]"
+		"[KOOOOROOOOOOOOROOK]"
+		"[ KOOOROOOOOOOOROOK]"
+		"[  KOOROOOOOOOOROOK]"
+		"[   KKROOOOOOOOROOK]"
+		"[    KKKKKKKKKKKKKK]";
+
+	int IdTexDroite;
+	int IdTexGauche;
+	V2 Pos;
+	V2 Size;
+	bool active;
+	int direction; // 0 : left | 1 : right
+
 };
 
 struct _Pistolet
 {
-	string texture =
+	string texture_gauche =
 		"[  MMMMMMMMMMMGGMM   ]"
 		"[  MMMMMMMMMMMMMMMM  ]"
 		"[  MMMMMMMMMMMMMGMG  ]"
@@ -161,12 +208,76 @@ struct _Pistolet
 		"[              GPPPG ]"
 		"[               GPPG ]"
 		"[               GGG  ]";
+	string texture_droite =
+		"[   MMGGMMMMMMMMMMM  ]"
+		"[  MMMMMMMMMMMMMMMM  ]"
+		"[  GMGMMMMMMMMMMMMM  ]"
+		"[  GGGGGGMGGGGGGGGG  ]"
+		"[   GPGG  G          ]"
+		"[  GPPPGGG           ]"
+		"[ GPPPG              ]"
+		"[ GPPG               ]"
+		"[  GGG               ]";
 
+	V2 Pos;
 	V2 Size;
-	int IdTex;
-	V2 Pos = V2(500, 45);
+	int IdTexGauche;
+	int IdTexDroite;
 };
 
+struct _Diamant
+{
+	string texture =
+		"[   WWWWWWWWWWW   ]"
+		"[  WCCCWCCCWCCCW  ]"
+		"[ WCCCWCCCCCWCCCW ]"
+		"[WCCCWCCCCCCCWCCCW]"
+		"[WWWWWWWWWWWWWWWWW]"
+		"[ WCCWCCCCCCCWCCW ]"
+		"[  WCCWCCCCCWCCW  ]"
+		"[   WCCWCCCWCCW   ]"
+		"[    WCCWCWCCW    ]"
+		"[     WCCWCCW     ]"
+		"[      WCCCW      ]"
+		"[       WCW       ]"
+		"[        W        ]";
+
+	V2 Pos;
+	V2 Size;
+	int IdTex;
+};
+
+struct _Porte 
+{
+	V2 Pos;
+	V2 Size;
+	bool isClosed = false;
+};
+
+struct _Spawner
+{
+	string texture =
+		"[PP PP PP PP]"
+		"[PPPPPPPPPPP]"
+		"[PPPPPPPPPPP]"
+		"[PPPPPPPPPPP]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]";
+
+	V2 Pos;
+	V2 Size;
+	int IdTex;
+	int Momies;
+	int MomiesMax = 3;
+	int nb_frame_before_spawn;
+};
 
 struct GameData
 {
@@ -196,16 +307,20 @@ struct GameData
 	_Heros Heros;   // data du héros
 	_Key   Key;
 	_Chest Chest;
-	_Momie Momies_tab[3];
-	int direction_init[3] = { 2,1,3 };
+	vector<_Momie> Momies;
 
 	int Ecran = 0;
 	int time = 0;
 
 	int n_frame = 0;
-	int last_direction = 1; // 0 : left | 1:right
 
 	_Pistolet Pistolet;
+	_Munition Munition;
+
+	_Diamant Diamant;
+
+	_Porte Portes[3];
+	_Spawner Spawners[2];
 
 	GameData() {}
 
@@ -229,6 +344,7 @@ void render()
 	//Partie en cours
 	if (G.Ecran == 1) {
 
+		//Affichage des murs
 		for (int x = 0; x < 15; x++)
 			for (int y = 0; y < 15; y++)
 			{
@@ -243,7 +359,7 @@ void render()
 
 
 		// affichage et animation du héros
-		G2D::DrawRectangle(G.Heros.Pos, G.Heros.Size, Color::Red);
+		//G2D::DrawRectangle(G.Heros.Pos, G.Heros.Size, Color::Red);
 		if (G2D::IsKeyPressed(Key::RIGHT)) {
 			if (G.n_frame % 30 < 15) {
 				G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
@@ -251,7 +367,7 @@ void render()
 			else {
 				G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size);
 			}
-			G.last_direction = 1;
+			G.Heros.last_direction = 1;
 		}
 		else if (G2D::IsKeyPressed(Key::LEFT)) {
 			if (G.n_frame % 30 < 15) {
@@ -260,10 +376,10 @@ void render()
 			else {
 				G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size);
 			}
-			G.last_direction = 0;
+			G.Heros.last_direction = 0;
 		}
 		else if (G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::DOWN)) {
-			if (G.last_direction == 1) {
+			if (G.Heros.last_direction == 1) {
 				if (G.n_frame % 30 < 15) {
 					G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
 				}
@@ -281,22 +397,67 @@ void render()
 			}
 		}
 		else {
-			if (G.last_direction == 1) { G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size); }
+			if (G.Heros.last_direction == 1) { G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size); }
 			else { G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size); }
 		}
 		G.n_frame++;
 
 		// affichage de la clef
 		G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
+
+		//Affichage du coffre
 		G2D::DrawRectWithTexture(G.Chest.IdTex, G.Chest.Pos, G.Chest.Size);
 		
 		//Affichage des momies
-		G2D::DrawRectWithTexture(G.Momies_tab[0].IdTex, G.Momies_tab[0].Pos, G.Momies_tab[0].Size);
-		G2D::DrawRectWithTexture(G.Momies_tab[1].IdTex, G.Momies_tab[1].Pos, G.Momies_tab[1].Size);
-		G2D::DrawRectWithTexture(G.Momies_tab[2].IdTex, G.Momies_tab[2].Pos, G.Momies_tab[2].Size);
+		for (auto& Momie : G.Momies) {
+			G2D::DrawRectWithTexture(Momie.IdTex, Momie.Pos, Momie.Size);
+		}
 
-		// Affichage Pistolet
-		G2D::DrawRectWithTexture(G.Pistolet.IdTex, G.Pistolet.Pos, G.Pistolet.Size);
+		// Affichage du pistolet
+		if (G.Heros.Inventaire.Pistolet) {
+			if (G.Heros.last_direction == 0) {
+				G2D::DrawRectWithTexture(G.Pistolet.IdTexGauche, G.Pistolet.Pos, G.Pistolet.Size);
+			}
+			else {
+				G2D::DrawRectWithTexture(G.Pistolet.IdTexDroite, G.Pistolet.Pos, G.Pistolet.Size);
+			}
+		}
+		else {
+			G2D::DrawRectWithTexture(G.Pistolet.IdTexGauche, G.Pistolet.Pos, G.Pistolet.Size);
+		}		
+
+		//Affichage de la munition
+		if (G.Munition.active == false) {
+			G2D::DrawRectWithTexture(G.Munition.IdTexDroite, G.Munition.Pos, G.Munition.Size);
+		}
+		else {
+			if (G.Munition.direction == 0) {
+				G2D::DrawRectWithTexture(G.Munition.IdTexGauche, G.Munition.Pos, G.Munition.Size);
+			}
+			else {
+				G2D::DrawRectWithTexture(G.Munition.IdTexDroite, G.Munition.Pos, G.Munition.Size);
+			}
+		}
+
+		//Affichage du dimant
+		G2D::DrawRectWithTexture(G.Diamant.IdTex, G.Diamant.Pos, G.Diamant.Size);
+
+
+		//Affichage des portes
+		for (_Porte Porte : G.Portes) {
+			if (Porte.isClosed) {
+				Porte.Size = V2(40, 40);
+			}
+			else {
+				Porte.Size = V2(40, 0);
+			}
+			G2D::DrawRectangle(Porte.Pos, Porte.Size, Color::Red, true);
+		}
+
+		//Affichage du spawner
+		for (int i = 0; i < sizeof G.Spawners / sizeof G.Spawners[0]; i++) {
+			G2D::DrawRectWithTexture(G.Spawners[i].IdTex, G.Spawners[i].Pos, G.Spawners[i].Size);
+		}
 		
 		/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -335,14 +496,9 @@ void Logic()
 
 	//Initialisation
 	if (G.Ecran == 4) {
-		_Heros h;
-		_Key k;
-		_Chest c;
-
-
-		G.Heros = h;
-		G.Key = k;
-		G.Chest = c;
+		
+		vector<_Momie> m;
+		G.Momies = m;
 
 		AssetsInit();
 
@@ -352,30 +508,24 @@ void Logic()
 	//Partie en cours
 	if (G.Ecran == 1) {
 
-		//Déplacements et collisions avec les murs
-		if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40) - 1, G.Heros.Pos.y / 40) || (G.Mur((G.Heros.Pos.x / 40) - 1, (G.Heros.Pos.y / 40) + 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40))))) {}
-		else {
+		//Déplacements du heros
+		if (!isCollisionGauche(G.Heros.Pos.x, G.Heros.Pos.y, G.Heros.Size.x, G.Heros.Size.y)) {
 			if (G2D::IsKeyPressed(Key::LEFT))  G.Heros.Pos.x--;
 		}
-		if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40 - 1, int(G.Heros.Pos.y / 40) * 40, 41, 41)) && G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40)) || (G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40) + 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40))))) {}
-		else {
+		if (!isCollisionDroite(G.Heros.Pos.x, G.Heros.Pos.y, G.Heros.Size.x, G.Heros.Size.y)){
 			if (G2D::IsKeyPressed(Key::RIGHT)) G.Heros.Pos.x++;
 		}
-		if (((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, int(G.Heros.Pos.x / 40) * 40, (int(G.Heros.Pos.y / 40) + 1) * 40 - 1, 41, 41)) && G.Mur((G.Heros.Pos.x / 40), (G.Heros.Pos.y / 40) + 1)) || (G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40) + 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40))))) {}
-		else {
+		if (!isCollisionHaut(G.Heros.Pos.x, G.Heros.Pos.y, G.Heros.Size.x, G.Heros.Size.y)) {
 			if (G2D::IsKeyPressed(Key::UP))    G.Heros.Pos.y++;
 		}
-		if (((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, int(G.Heros.Pos.x / 40) * 40, (int(G.Heros.Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40), (G.Heros.Pos.y / 40) - 1)) || (G.Mur((G.Heros.Pos.x / 40) + 1, (G.Heros.Pos.y / 40) - 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40 - 1) * 40, 40, 40))))) {}
-		else {
+		if (!isCollisionBas(G.Heros.Pos.x, G.Heros.Pos.y, G.Heros.Size.x, G.Heros.Size.y)) {
 			if (G2D::IsKeyPressed(Key::DOWN))  G.Heros.Pos.y--;
 		}
-
 
 		//Collision avec la clef
 		if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Key.Pos.x, G.Key.Pos.y, G.Key.Size.y, G.Key.Size.x)) {
 			G.Heros.Inventaire.Key = true;
-			G.Key.Size = V2(0, 0);
-			G.Key.Pos = V2(0, 0);
+			G.Key.Pos = V2(160, 570);
 		}
 
 		//Collision avec le coffre
@@ -386,52 +536,153 @@ void Logic()
 			G.time = G2D::ElapsedTimeFromStartSeconds();
 		}
 
+
+		// Deplacements des Momies
+		for (auto& Momie : G.Momies) {
+
+			if (Momie.active) {
+				if (isCollisionGauche(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				{
+					Momie.Pos.x++;
+					Momie.direction = rand_direction();
+				}
+				else {
+					if (Momie.direction == 0) { { Momie.Pos.x--; } }
+				}
+
+				if (isCollisionDroite(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				{
+					Momie.Pos.x--;
+					Momie.direction = rand_direction();
+				}
+				else {
+					if (Momie.direction == 1) { { Momie.Pos.x++; } }
+				}
+
+				if (isCollisionHaut(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				{
+					Momie.Pos.y--;
+					Momie.direction = rand_direction();
+				}
+				else {
+					if (Momie.direction == 2) { { Momie.Pos.y++; } }
+				}
+
+				if (isCollisionBas(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				{
+					Momie.Pos.y++;
+					Momie.direction = rand_direction();
+				}
+				else {
+					if (Momie.direction == 3) { { Momie.Pos.y--; } }
+				}
+			}
+		}
+
 		//Collision avec la momie
-		for (int i = 0; i < 3; i++) {
-			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Momies_tab[i].Pos.x, G.Momies_tab[i].Pos.y, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x)) {
+		for (auto& Momie : G.Momies) {
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, Momie.Pos.x, Momie.Pos.y, Momie.Size.y, Momie.Size.x)) {
 				G.Heros.vies -= 1;
 				G.Heros.Pos = V2(45, 45);
 			}
-
 		}
 
-		// Déplacement des Momies
-		for (int i = 0; i < 3; i++) {
 
-			if ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) - 1) * 40, int(G.Momies_tab[i].Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40) - 1, G.Momies_tab[i].Pos.y / 40) || (G.Mur((G.Momies_tab[i].Pos.x / 40) - 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) - 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
-			{
-				G.Momies_tab[i].Pos.x++;
-				G.direction_init[i] = rand_direction();
+		//Collision avec le pistolet
+		if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Pistolet.Pos.x, G.Pistolet.Pos.y, G.Pistolet.Size.y, G.Pistolet.Size.x)) {
+			G.Heros.Inventaire.Pistolet = true;
+		}
+
+		//Deplacements du pistolet
+		if (G.Heros.Inventaire.Pistolet) {
+			if (G.Heros.last_direction == 1) {
+				G.Pistolet.Pos.x = G.Heros.Pos.x;
 			}
 			else {
-				if (G.direction_init[i] == 0) { { G.Momies_tab[i].Pos.x--; } }
+				G.Pistolet.Pos.x = G.Heros.Pos.x - G.Heros.largeur;
 			}
+			G.Pistolet.Pos.y = G.Heros.Pos.y + G.Heros.hauteur / 2;
+		}
 
-			if ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
-			{
-				G.Momies_tab[i].Pos.x--;
-				G.direction_init[i] = rand_direction();
+		//Utilisation du pistolet
+		if (G.Heros.Inventaire.Pistolet && G.Heros.Inventaire.Munition) {
+			if (G2D::IsKeyPressed(Key::ENTER)) {
+				G.Heros.Inventaire.Munition = false;
+				G.Munition.active = true;
+				G.Munition.direction = G.Heros.last_direction;
+				G.Munition.Pos = G.Pistolet.Pos;
+			}
+		}
+
+		//Collision avec la munition
+		if (G.Munition.active == false) {
+			//Le joueur ramasse la munition au sol
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Munition.Pos.x, G.Munition.Pos.y, G.Munition.Size.y, G.Munition.Size.x)) {
+				G.Heros.Inventaire.Munition = true;
+				G.Munition.Pos = V2(200, 570);
+			}
+		}
+		else {
+			for (auto& Momie : G.Momies) {
+				//Une momie reçoit la munition tirée
+				if (InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, G.Munition.Pos.x, G.Munition.Pos.y, G.Munition.Size.y, G.Munition.Size.x)) {
+					G.Munition.active = false;
+					G.Munition.Size = V2(0, 0);
+					G.Munition.Pos = V2(0, 0);
+					Momie.active = false;
+					Momie.Size = V2(0, 0);
+					Momie.Pos = V2(0, 0);
+				}
+			}
+		}
+
+		//Deplacements de la munition
+		if (G.Munition.active) {
+			if (G.Munition.direction) {
+				if (isCollisionDroite(G.Munition.Pos.x, G.Munition.Pos.y, G.Munition.Size.x, G.Munition.Size.y)) {
+					G.Munition.active = false;
+					G.Munition.Size = V2(0, 0);
+					G.Munition.Pos = V2(0, 0);
+				}
+				G.Munition.Pos.x = G.Munition.Pos.x + 3;
 			}
 			else {
-				if (G.direction_init[i] == 1) { { G.Momies_tab[i].Pos.x++; } }
+				if (isCollisionGauche(G.Munition.Pos.x, G.Munition.Pos.y, G.Munition.Size.x, G.Munition.Size.y)) {
+					G.Munition.active = false;
+					G.Munition.Size = V2(0, 0);
+					G.Munition.Pos = V2(0, 0);
+				}
+				G.Munition.Pos.x = G.Munition.Pos.x - 3;
 			}
+		}
 
-			if (((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, int(G.Momies_tab[i].Pos.x / 40) * 40, (int(G.Momies_tab[i].Pos.y / 40) + 1) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40), (G.Momies_tab[i].Pos.y / 40) + 1)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
-			{
-				G.Momies_tab[i].Pos.y--;
-				G.direction_init[i] = rand_direction();
-			}
-			else {
-				if (G.direction_init[i] == 2) { { G.Momies_tab[i].Pos.y++; } }
-			}
 
-			if (((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, int(G.Momies_tab[i].Pos.x / 40) * 40, (int(G.Momies_tab[i].Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40), (G.Momies_tab[i].Pos.y / 40) - 1)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) - 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 - 1) * 40, 40, 40)))))
-			{
-				G.Momies_tab[i].Pos.y++;
-				G.direction_init[i] = rand_direction();
+		//Gestion aléatoire de la fermeture des portes
+		if (G.n_frame % 100 == 0) {
+			for (_Porte& Porte : G.Portes) {
+
+				int nb_rand = rand() % 2;
+
+				if (nb_rand == 1) { 
+					Porte.isClosed = true; 
+				}
+				else { 
+					Porte.isClosed = false; 
+				}
 			}
-			else {
-				if (G.direction_init[i] == 3) { { G.Momies_tab[i].Pos.y--; } }
+		}
+
+		//Gestion du spawn de momies
+		for (int i = 0; i < sizeof G.Spawners / sizeof G.Spawners[0]; i++) {
+			if (G.n_frame % G.Spawners[i].nb_frame_before_spawn == 0 && G.Spawners[i].Momies < G.Spawners[i].MomiesMax) {
+				_Momie M;
+				M.IdTex = G2D::InitTextureFromString(M.Size, M.texture);
+				M.Pos = G.Spawners[i].Pos;
+				M.Size = M.Size * 1.5;
+				M.active = true;
+				G.Momies.push_back(M);
+				G.Spawners[i].Momies++;
+				G.Spawners[i].nb_frame_before_spawn = frameBeforeSpawn();
 			}
 		}
 
@@ -468,28 +719,86 @@ void AssetsInit()
 	G.Heros.IdTexDroite2 = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_droite2);
 	G.Heros.IdTexGauche = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_gauche);
 	G.Heros.IdTexGauche2 = G2D::InitTextureFromString(G.Heros.Size, G.Heros.texture_gauche2);
+	G.Heros.Pos = V2(45, 45);
 	G.Heros.Size = G.Heros.Size * 2; // on peut zoomer la taille du sprite
+	G.Heros.vies = 3;
+	G.Heros.last_direction = 1;
 
-   G.Key.IdTex   = G2D::InitTextureFromString(G.Key.Size, G.Key.texture);
-   G.Key.Size    = G.Key.Size * 1.5; // on peut zoomer la taille du sprite
+	G.Heros.Inventaire.Key = false;
+	G.Heros.Inventaire.Munition = false;
+	G.Heros.Inventaire.Pistolet = false;
+	G.Heros.Inventaire.Diamant = false;
 
-   G.Chest.IdTex = G2D::InitTextureFromString(G.Chest.Size, G.Chest.texture);
-   G.Chest.Size = G.Chest.Size * 2;
+	G.Key.IdTex = G2D::InitTextureFromString(G.Key.Size, G.Key.texture);
+	G.Key.Pos = V2(40, 200);
+	G.Key.Size = G.Key.Size * 1.5; // on peut zoomer la taille du sprite
 
-   G.Momies_tab[0].IdTex = G2D::InitTextureFromString(G.Momies_tab[0].Size, G.Momies_tab[0].texture);
-   G.Momies_tab[0].Size = G.Momies_tab[0].Size * 1.5;
-   G.Momies_tab[0].Pos = V2(45, 240);
+	G.Chest.IdTex = G2D::InitTextureFromString(G.Chest.Size, G.Chest.texture);
+	G.Chest.Pos = V2(35, 120);
+	G.Chest.Size = G.Chest.Size * 2;
 
-   G.Momies_tab[1].IdTex = G2D::InitTextureFromString(G.Momies_tab[1].Size, G.Momies_tab[1].texture);
-   G.Momies_tab[1].Size = G.Momies_tab[1].Size * 1.5;
-   G.Momies_tab[1].Pos = V2(200, 240);
+	_Momie Momie1;
+	_Momie Momie2;
+	_Momie Momie3;
 
-   G.Momies_tab[2].IdTex = G2D::InitTextureFromString(G.Momies_tab[2].Size, G.Momies_tab[2].texture);
-   G.Momies_tab[2].Size = G.Momies_tab[2].Size * 1.5;
-   G.Momies_tab[2].Pos = V2(320, 240);
+	Momie1.IdTex = G2D::InitTextureFromString(Momie1.Size, Momie1.texture);
+	Momie1.Pos = V2(45, 240);
+	Momie1.Size = Momie1.Size * 1.5;
+	Momie1.active = true;
 
-   G.Pistolet.IdTex = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture);
-   G.Pistolet.Size = G.Pistolet.Size * 1;
+	Momie2.IdTex = G2D::InitTextureFromString(Momie2.Size, Momie2.texture);
+	Momie2.Pos = V2(200, 240);
+	Momie2.Size = Momie2.Size * 1.5;
+	Momie2.active = true;
+
+	Momie3.IdTex = G2D::InitTextureFromString(Momie3.Size, Momie3.texture);
+	Momie3.Pos = V2(320, 240);
+	Momie3.Size = Momie3.Size * 1.5;
+	Momie3.active = true;
+
+	G.Momies.push_back(Momie1);
+	G.Momies.push_back(Momie2);
+	G.Momies.push_back(Momie3);
+
+	G.Pistolet.IdTexGauche = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_gauche);
+	G.Pistolet.IdTexDroite = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_droite);
+	G.Pistolet.Pos = V2(130, 70);
+
+	G.Munition.IdTexDroite = G2D::InitTextureFromString(G.Munition.Size, G.Munition.texture_droite);
+	G.Munition.IdTexGauche = G2D::InitTextureFromString(G.Munition.Size, G.Munition.texture_gauche);
+	G.Munition.Pos = V2(50, 80);
+	G.Munition.active = false;
+	G.Munition.direction = 1;
+
+	G.Diamant.IdTex = G2D::InitTextureFromString(G.Diamant.Size, G.Diamant.texture);
+	G.Diamant.Pos = V2(450, 130);
+
+	G.Portes[0].Pos = V2(80, 80);
+	G.Portes[1].Pos = V2(120, 400);
+	G.Portes[2].Pos = V2(160, 40);
+
+	for (_Porte Porte : G.Portes) {
+	   Porte.Size = V2(40, 40);
+	}
+
+	_Spawner Spawner1;
+	_Spawner Spawner2;
+
+	Spawner1.IdTex = G2D::InitTextureFromString(Spawner1.Size, Spawner1.texture);
+	Spawner1.Size = Spawner1.Size * 2;
+	Spawner1.Pos = V2(400, 45);
+	Spawner1.nb_frame_before_spawn = frameBeforeSpawn();
+	Spawner1.Momies = 0;
+
+	Spawner2.IdTex = G2D::InitTextureFromString(Spawner2.Size, Spawner2.texture);
+	Spawner2.Size = Spawner2.Size * 2;
+	Spawner2.Pos = V2(450, 450);
+	Spawner2.nb_frame_before_spawn = frameBeforeSpawn();
+	Spawner2.Momies = 0;
+
+	G.Spawners[0] = Spawner1;
+	G.Spawners[1] = Spawner2;
+   
 }
 
 int main(int argc, char* argv[])
@@ -497,8 +806,6 @@ int main(int argc, char* argv[])
 
 	G2D::InitWindow(argc,argv,V2(G.Lpix * 15, G.Lpix * 15), V2(200,200), string("Labyrinthe"));
 	  
-	AssetsInit();
-
 	G2D::Run(Logic,render);
  
 }
@@ -522,6 +829,134 @@ bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur
 	return true;
 }
 
+//Retourne un chiffre aléatoire en 0 et 4 afin de choisir une direction pour la momie
 int rand_direction(){
 	return rand() % 4;
+}
+
+//Retourne true si la porte située en (x, y) est fermée, false sinon
+bool isPorteClosed(int x, int y) {
+
+	int pos_horizontal = x * 40;
+	int pos_vertical = y * 40;
+
+	for (_Porte &Porte : G.Portes) {
+		if (Porte.Pos.x == pos_horizontal && Porte.Pos.y == pos_vertical && Porte.isClosed == true) return true;
+	}
+
+	return false;
+}
+
+//Detecte si un objet est bloque vers la gauche
+bool isCollisionGauche(int x, int y, int sizex, int sizey) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40) * 40, 40, 40) && G.Mur((x / 40) - 1, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40 + 1) * 40, 40, 40) && G.Mur((x / 40) - 1, (y / 40) + 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40) - 1, int(y / 40))) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) - 1, int(y / 40) + 1)) {
+		return true;
+	}
+
+	return false;
+}
+
+//Detecte si un objet est bloque vers la droite
+bool isCollisionDroite(int x, int y, int sizex, int sizey) {
+
+	if (InterRectRect(V2(x,y), sizey, sizex, (int(x / 40) + 1) * 40 - 1, int(y / 40) * 40, 40, 41) && G.Mur((x / 40) + 1, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, int(y / 40 + 1) * 40, 40, 40) && G.Mur((x / 40) + 1, (y / 40) + 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40 - 1, int(y / 40) * 40, 40, 41) && isPorteClosed(int(x / 40) + 1, int(y / 40))) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) + 1)) {
+		return true;
+	}
+
+	return false;
+}
+
+//Detecte si un objet est bloque vers le haut
+bool isCollisionHaut(int x, int y, int sizex, int sizey) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) + 1) * 40 - 1 - 1, 41, 40) && G.Mur(x / 40, (y / 40) + 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && G.Mur((x / 40) + 1, (y / 40) + 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) + 1) * 40, 41, 40) && isPorteClosed(int(x / 40), int(y / 40) + 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) + 1)) {
+		return true;
+	}
+
+	return false;
+}
+
+//Detecte si un objet est bloque vers le bas
+bool isCollisionBas(int x, int y, int sizex, int sizey) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) - 1) * 40, 40, 40) && G.Mur(x / 40, (y / 40) - 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) - 1) * 40, 40, 40) && G.Mur((x / 40) + 1, (y / 40) - 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) - 1) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40) - 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) - 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) - 1)) {
+		return true;
+	}
+
+	return false;
+}
+
+//Retourne un nombre aléatoire en 500 et 2000
+int frameBeforeSpawn() {
+	int r = rand() % 1500;
+	return r + 500;
 }
