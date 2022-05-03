@@ -11,6 +11,7 @@
 bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur2, int largeur2);
 void AssetsInit();
 int rand_direction();
+bool isPorteClosed(int x, int y);
  
 using namespace std;
 
@@ -263,6 +264,8 @@ void render()
 {
 	G2D::ClearScreen(Color::Black);
 
+	std::cout << isPorteClosed(4, 1)<<"\n";
+
 	//Ecran d'accueil
 	if (G.Ecran == 0) {
 
@@ -422,7 +425,7 @@ void Logic()
 	//Partie en cours
 	if (G.Ecran == 1) {
 
-		//Déplacements et collisions avec les murs
+		//Déplacements et collisions avec les murs et les portes
 		if ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Heros.Pos.x / 40) - 1, G.Heros.Pos.y / 40) || (G.Mur((G.Heros.Pos.x / 40) - 1, (G.Heros.Pos.y / 40) + 1) && ((InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, (int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40 + 1) * 40, 40, 40))))) {}
 		else {
 			if (G2D::IsKeyPressed(Key::LEFT))  G.Heros.Pos.x--;
@@ -528,7 +531,7 @@ void Logic()
 		}
 
 		//Gestion aléatoire fermeture des portes
-		if (G.n_frame % 500 == 0) {
+		if (G.n_frame % 100 == 0) {
 			for (_Porte &Porte : G.Portes) {
 				int nb_rand = rand() % 2;
 				if (nb_rand == 1) { Porte.isClosed = true; }
@@ -632,4 +635,13 @@ bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur
 
 int rand_direction(){
 	return rand() % 4;
+}
+
+bool isPorteClosed(int x, int y) {
+	int pos_horizontal = x * 40;
+	int pos_vertical = y * 40;
+	for (_Porte &Porte : G.Portes) {
+		if (Porte.Pos.x == pos_horizontal && Porte.Pos.y == pos_vertical && Porte.isClosed==true) return true;
+	}
+	return false;
 }
