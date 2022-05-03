@@ -12,11 +12,17 @@ bool InterRectRect(V2 pos, int hauteur, int largeur, int x2, int y2, int hauteur
 void AssetsInit();
 int rand_direction();
 bool isPorteClosed(int x, int y);
+bool isCheckPoint(int x, int y);
 bool isCollisionGauche(int x, int y, int sizex, int sizey);
 bool isCollisionDroite(int x, int y, int sizex, int sizey);
 bool isCollisionHaut(int x, int y, int sizex, int sizey);
 bool isCollisionBas(int x, int y, int sizex, int sizey);
+bool isCollisionGauche(int x, int y, int sizex, int sizey, bool isMomie);
+bool isCollisionDroite(int x, int y, int sizex, int sizey, bool isMomie);
+bool isCollisionHaut(int x, int y, int sizex, int sizey, bool isMomie);
+bool isCollisionBas(int x, int y, int sizex, int sizey, bool isMomie);
 int frameBeforeSpawn();
+void Mort();
 
  
 using namespace std;
@@ -90,6 +96,7 @@ struct _Heros
 	int largeur = 5;
 	int vies;
 	int last_direction; // 0 : left | 1 : right
+	V2 last_checkpoint;
 
 	_Inventaire Inventaire;
 };
@@ -247,6 +254,11 @@ struct _Diamant
 	int IdTex;
 };
 
+struct _CheckPoint {
+	V2 Pos;
+	V2 Size;
+};
+
 struct _Porte 
 {
 	V2 Pos;
@@ -319,6 +331,8 @@ struct GameData
 
 	_Diamant Diamant;
 
+	_CheckPoint CheckPoints[3];
+
 	_Porte Portes[3];
 	_Spawner Spawners[2];
 
@@ -345,14 +359,22 @@ void render()
 	if (G.Ecran == 1) {
 
 		//Affichage des murs
-		for (int x = 0; x < 15; x++)
-			for (int y = 0; y < 15; y++)
-			{
+		for (int x = 0; x < 15; x++) {
+			for (int y = 0; y < 15; y++) {
+
 				int xx = x * G.Lpix;
 				int yy = y * G.Lpix;
-				if (G.Mur(x, y))
+
+				if (G.Mur(x, y)) {
 					G2D::DrawRectangle(V2(xx, yy), V2(G.Lpix, G.Lpix), Color::Blue, true);
+				}
 			}
+		}
+
+		//Affichage des CheckPoints
+		for (_CheckPoint& CheckPoint : G.CheckPoints) {
+			G2D::DrawRectangle(CheckPoint.Pos, CheckPoint.Size, Color::Green, true);
+		}
 
 		//Affichage des vies restantes
 		G2D::DrawStringFontMono(V2(40, 570), "Vies : " + std::to_string(G.Heros.vies), 20, 2, Color::Red);
@@ -439,7 +461,7 @@ void render()
 			}
 		}
 
-		//Affichage du dimant
+		//Affichage du diamant
 		G2D::DrawRectWithTexture(G.Diamant.IdTex, G.Diamant.Pos, G.Diamant.Size);
 
 
@@ -541,7 +563,7 @@ void Logic()
 		for (auto& Momie : G.Momies) {
 
 			if (Momie.active) {
-				if (isCollisionGauche(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				if (isCollisionGauche(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y, true))
 				{
 					Momie.Pos.x++;
 					Momie.direction = rand_direction();
@@ -550,7 +572,7 @@ void Logic()
 					if (Momie.direction == 0) { { Momie.Pos.x--; } }
 				}
 
-				if (isCollisionDroite(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				if (isCollisionDroite(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y, true))
 				{
 					Momie.Pos.x--;
 					Momie.direction = rand_direction();
@@ -559,7 +581,7 @@ void Logic()
 					if (Momie.direction == 1) { { Momie.Pos.x++; } }
 				}
 
-				if (isCollisionHaut(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				if (isCollisionHaut(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y, true))
 				{
 					Momie.Pos.y--;
 					Momie.direction = rand_direction();
@@ -568,7 +590,7 @@ void Logic()
 					if (Momie.direction == 2) { { Momie.Pos.y++; } }
 				}
 
-				if (isCollisionBas(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y))
+				if (isCollisionBas(Momie.Pos.x, Momie.Pos.y, Momie.Size.x, Momie.Size.y, true))
 				{
 					Momie.Pos.y++;
 					Momie.direction = rand_direction();
@@ -582,8 +604,7 @@ void Logic()
 		//Collision avec la momie
 		for (auto& Momie : G.Momies) {
 			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, Momie.Pos.x, Momie.Pos.y, Momie.Size.y, Momie.Size.x)) {
-				G.Heros.vies -= 1;
-				G.Heros.Pos = V2(45, 45);
+				Mort();
 			}
 		}
 
@@ -672,9 +693,16 @@ void Logic()
 			}
 		}
 
+		//Gestion des checkpoints
+		for (_CheckPoint& CheckPoint : G.CheckPoints) {
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, CheckPoint.Pos.x, CheckPoint.Pos.y, CheckPoint.Size.y, CheckPoint.Size.x)) {
+				G.Heros.last_checkpoint = V2(CheckPoint.Pos.x + 5, CheckPoint.Pos.y + 5);
+			}
+		}
+
 		//Gestion du spawn de momies
 		for (int i = 0; i < sizeof G.Spawners / sizeof G.Spawners[0]; i++) {
-			if (G.n_frame % G.Spawners[i].nb_frame_before_spawn == 0 && G.Spawners[i].Momies < G.Spawners[i].MomiesMax) {
+			if (G.n_frame % G.Spawners[i].nb_frame_before_spawn == 0 && G.Spawners[i].Momies < G.Spawners[i].MomiesMax && G.n_frame != 0) {
 				_Momie M;
 				M.IdTex = G2D::InitTextureFromString(M.Size, M.texture);
 				M.Pos = G.Spawners[i].Pos;
@@ -723,6 +751,7 @@ void AssetsInit()
 	G.Heros.Size = G.Heros.Size * 2; // on peut zoomer la taille du sprite
 	G.Heros.vies = 3;
 	G.Heros.last_direction = 1;
+	G.Heros.last_checkpoint = V2(45, 45);
 
 	G.Heros.Inventaire.Key = false;
 	G.Heros.Inventaire.Munition = false;
@@ -772,6 +801,15 @@ void AssetsInit()
 
 	G.Diamant.IdTex = G2D::InitTextureFromString(G.Diamant.Size, G.Diamant.texture);
 	G.Diamant.Pos = V2(450, 130);
+
+	G.CheckPoints[0].Pos = V2(40, 40);
+	G.CheckPoints[0].Size = V2(40, 40);
+
+	G.CheckPoints[1].Pos = V2(480, 200);
+	G.CheckPoints[1].Size = V2(40, 40);
+
+	G.CheckPoints[2].Pos = V2(360, 480);
+	G.CheckPoints[2].Size = V2(40, 40);
 
 	G.Portes[0].Pos = V2(80, 80);
 	G.Portes[1].Pos = V2(120, 400);
@@ -834,7 +872,7 @@ int rand_direction(){
 	return rand() % 4;
 }
 
-//Retourne true si la porte située en (x, y) est fermée, false sinon
+//Retourne true s'il y a une porte fermee en (x, y), false sinon
 bool isPorteClosed(int x, int y) {
 
 	int pos_horizontal = x * 40;
@@ -845,6 +883,21 @@ bool isPorteClosed(int x, int y) {
 	}
 
 	return false;
+}
+
+//Retourne true s'il y a un checkpoint en (x, y), false sinon
+bool isCheckPoint(int x, int y) {
+
+	int pos_horizontal = x * 40;
+	int pos_vertical = y * 40;
+
+	for (_CheckPoint& CheckPoint : G.CheckPoints) {
+		if (CheckPoint.Pos.x == pos_horizontal && CheckPoint.Pos.y == pos_vertical) {
+			return true;
+		}
+
+		return false;
+	}
 }
 
 //Detecte si un objet est bloque vers la gauche
@@ -869,6 +922,42 @@ bool isCollisionGauche(int x, int y, int sizex, int sizey) {
 	}
 	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) - 1, int(y / 40) + 1)) {
 		return true;
+	}
+
+	return false;
+}
+
+//Surcharge avec un booleen isMomie
+bool isCollisionGauche(int x, int y, int sizex, int sizey, bool isMomie) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40) * 40, 40, 40) && G.Mur((x / 40) - 1, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40 + 1) * 40, 40, 40) && G.Mur((x / 40) - 1, (y / 40) + 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40) - 1, int(y / 40))) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) - 1, int(y / 40) + 1)) {
+		return true;
+	}
+
+	if (isMomie) {
+		if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, int(y / 40) * 40, 40, 40) && isCheckPoint(int(x / 40) - 1, int(y / 40))) {
+			return true;
+		}
+		if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) - 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isCheckPoint(int(x / 40) - 1, int(y / 40) + 1)) {
+			return true;
+		}
 	}
 
 	return false;
@@ -901,6 +990,42 @@ bool isCollisionDroite(int x, int y, int sizex, int sizey) {
 	return false;
 }
 
+//Surcharge avec un booleen isMomie
+bool isCollisionDroite(int x, int y, int sizex, int sizey, bool isMomie) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40 - 1, int(y / 40) * 40, 40, 41) && G.Mur((x / 40) + 1, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, int(y / 40 + 1) * 40, 40, 40) && G.Mur((x / 40) + 1, (y / 40) + 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40 - 1, int(y / 40) * 40, 40, 41) && isPorteClosed(int(x / 40) + 1, int(y / 40))) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) + 1)) {
+		return true;
+	}
+
+	if (isMomie) {
+		if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40 - 1, int(y / 40) * 40, 40, 41) && isCheckPoint(int(x / 40) + 1, int(y / 40))) {
+			return true;
+		}
+		if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isCheckPoint(int(x / 40) + 1, int(y / 40) + 1)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //Detecte si un objet est bloque vers le haut
 bool isCollisionHaut(int x, int y, int sizex, int sizey) {
 
@@ -923,6 +1048,42 @@ bool isCollisionHaut(int x, int y, int sizex, int sizey) {
 	}
 	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) + 1)) {
 		return true;
+	}
+
+	return false;
+}
+
+//Surcharge avec un booleen isMomie
+bool isCollisionHaut(int x, int y, int sizex, int sizey, bool isMomie) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) + 1) * 40 - 1 - 1, 41, 40) && G.Mur(x / 40, (y / 40) + 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && G.Mur((x / 40) + 1, (y / 40) + 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) + 1) * 40, 41, 40) && isPorteClosed(int(x / 40), int(y / 40) + 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) + 1)) {
+		return true;
+	}
+
+	if (isMomie) {
+		if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) + 1) * 40, 41, 40) && isCheckPoint(int(x / 40), int(y / 40) + 1)) {
+			return true;
+		}
+		if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) + 1) * 40, 40, 40) && isCheckPoint(int(x / 40) + 1, int(y / 40) + 1)) {
+			return true;
+		}
 	}
 
 	return false;
@@ -955,8 +1116,50 @@ bool isCollisionBas(int x, int y, int sizex, int sizey) {
 	return false;
 }
 
+//Surcharge avec un booleen isMomie
+bool isCollisionBas(int x, int y, int sizex, int sizey, bool isMomie) {
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) - 1) * 40, 40, 40) && G.Mur(x / 40, (y / 40) - 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) - 1) * 40, 40, 40) && G.Mur((x / 40) + 1, (y / 40) - 1)) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && G.Mur(x / 40, y / 40)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, int(y / 40) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40))) {
+		return true;
+	}
+
+	if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) - 1) * 40, 40, 40) && isPorteClosed(int(x / 40), int(y / 40) - 1)) {
+		return true;
+	}
+	if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) - 1) * 40, 40, 40) && isPorteClosed(int(x / 40) + 1, int(y / 40) - 1)) {
+		return true;
+	}
+
+	if (isMomie) {
+		if (InterRectRect(V2(x, y), sizey, sizex, int(x / 40) * 40, (int(y / 40) - 1) * 40, 40, 40) && isCheckPoint(int(x / 40), int(y / 40) - 1)) {
+			return true;
+		}
+		if (InterRectRect(V2(x, y), sizey, sizex, (int(x / 40) + 1) * 40, (int(y / 40) - 1) * 40, 40, 40) && isCheckPoint(int(x / 40) + 1, int(y / 40) - 1)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //Retourne un nombre aléatoire en 500 et 2000
 int frameBeforeSpawn() {
 	int r = rand() % 1500;
 	return r + 500;
+}
+
+//Actions a executer lorsque le heros meurt
+void Mort() {
+	G.Heros.vies -= 1;
+	G.Heros.Pos = G.Heros.last_checkpoint;
 }
