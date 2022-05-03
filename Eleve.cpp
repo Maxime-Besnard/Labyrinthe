@@ -17,7 +17,7 @@ using namespace std;
 struct _Inventaire {
 
 	bool Key = false;
-
+	bool Pistolet = false;
 };
  
 struct _Heros
@@ -80,6 +80,7 @@ struct _Heros
 	int hauteur = 11;
 	int largeur = 5;
 	int vies = 3;
+	int last_direction = 1; // 0 : left | 1:right
 
 	_Inventaire Inventaire;
 };
@@ -151,7 +152,7 @@ struct _Momie
 
 struct _Pistolet
 {
-	string texture =
+	string texture_gauche =
 		"[  MMMMMMMMMMMGGMM   ]"
 		"[  MMMMMMMMMMMMMMMM  ]"
 		"[  MMMMMMMMMMMMMGMG  ]"
@@ -161,9 +162,20 @@ struct _Pistolet
 		"[              GPPPG ]"
 		"[               GPPG ]"
 		"[               GGG  ]";
+	string texture_droite =
+		"[   MMGGMMMMMMMMMMM  ]"
+		"[  MMMMMMMMMMMMMMMM  ]"
+		"[  GMGMMMMMMMMMMMMM  ]"
+		"[  GGGGGGMGGGGGGGGG  ]"
+		"[   GPGG  G          ]"
+		"[  GPPPGGG           ]"
+		"[ GPPPG              ]"
+		"[ GPPG               ]"
+		"[  GGG               ]";
 
 	V2 Size;
-	int IdTex;
+	int IdTexGauche;
+	int IdTexDroite;
 	V2 Pos = V2(500, 45);
 };
 
@@ -225,7 +237,6 @@ struct GameData
 	int time = 0;
 
 	int n_frame = 0;
-	int last_direction = 1; // 0 : left | 1:right
 
 	_Pistolet Pistolet;
 
@@ -275,7 +286,7 @@ void render()
 			else {
 				G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size);
 			}
-			G.last_direction = 1;
+			G.Heros.last_direction = 1;
 		}
 		else if (G2D::IsKeyPressed(Key::LEFT)) {
 			if (G.n_frame % 30 < 15) {
@@ -284,10 +295,10 @@ void render()
 			else {
 				G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size);
 			}
-			G.last_direction = 0;
+			G.Heros.last_direction = 0;
 		}
 		else if (G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::DOWN)) {
-			if (G.last_direction == 1) {
+			if (G.Heros.last_direction == 1) {
 				if (G.n_frame % 30 < 15) {
 					G2D::DrawRectWithTexture(G.Heros.IdTexDroite, G.Heros.Pos, G.Heros.Size);
 				}
@@ -305,7 +316,7 @@ void render()
 			}
 		}
 		else {
-			if (G.last_direction == 1) { G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size); }
+			if (G.Heros.last_direction == 1) { G2D::DrawRectWithTexture(G.Heros.IdTexDroite2, G.Heros.Pos, G.Heros.Size); }
 			else { G2D::DrawRectWithTexture(G.Heros.IdTexGauche2, G.Heros.Pos, G.Heros.Size); }
 		}
 		G.n_frame++;
@@ -320,7 +331,18 @@ void render()
 		G2D::DrawRectWithTexture(G.Momies_tab[2].IdTex, G.Momies_tab[2].Pos, G.Momies_tab[2].Size);
 
 		// Affichage Pistolet
-		G2D::DrawRectWithTexture(G.Pistolet.IdTex, G.Pistolet.Pos, G.Pistolet.Size);
+		if (G.Heros.Inventaire.Pistolet) {
+			if (G.Heros.last_direction == 0) {
+				G2D::DrawRectWithTexture(G.Pistolet.IdTexGauche, G.Pistolet.Pos, G.Pistolet.Size);
+			}
+			else {
+				G2D::DrawRectWithTexture(G.Pistolet.IdTexDroite, G.Pistolet.Pos, G.Pistolet.Size);
+			}
+		}
+		else {
+			G2D::DrawRectWithTexture(G.Pistolet.IdTexGauche, G.Pistolet.Pos, G.Pistolet.Size);
+		}
+		
 
 		//Affichage Dimand
 		G2D::DrawRectWithTexture(G.Diamand.IdTex, G.Diamand.Pos, G.Diamand.Size);
@@ -422,6 +444,22 @@ void Logic()
 
 		}
 
+		//Collision avec le pistolet
+		if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Pistolet.Pos.x, G.Pistolet.Pos.y, G.Pistolet.Size.y, G.Pistolet.Size.x)) {
+			G.Heros.Inventaire.Pistolet = true;
+		}
+
+		//Deplacement Pistolet
+		if (G.Heros.Inventaire.Pistolet) {
+			if (G.Heros.last_direction == 1) {
+				G.Pistolet.Pos.x = G.Heros.Pos.x;
+			}
+			else {
+				G.Pistolet.Pos.x = G.Heros.Pos.x - G.Heros.largeur;
+			}
+			G.Pistolet.Pos.y = G.Heros.Pos.y + G.Heros.hauteur / 2;
+		}
+
 		// Déplacement des Momies
 		for (int i = 0; i < 3; i++) {
 
@@ -515,7 +553,8 @@ void AssetsInit()
    G.Momies_tab[2].Size = G.Momies_tab[2].Size * 1.5;
    G.Momies_tab[2].Pos = V2(320, 240);
 
-   G.Pistolet.IdTex = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture);
+   G.Pistolet.IdTexGauche = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_gauche);
+   G.Pistolet.IdTexDroite = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_droite);
    G.Pistolet.Size = G.Pistolet.Size * 1;
 
    G.Diamand.IdTex = G2D::InitTextureFromString(G.Diamand.Size, G.Diamand.texture);
