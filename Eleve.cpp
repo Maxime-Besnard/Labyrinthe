@@ -227,9 +227,12 @@ struct _Spawner
 		"[ PPPPPPPPP ]"
 		"[ PPPPPPPPP ]"
 		"[ PPPPPPPPP ]";
-	V2 Pos =  V2(400,45);
+	V2 Pos;
 	int IdTex;
 	V2 Size;
+	int max_spawn = 2;
+	int nb_spawned = 0;
+	int nb_frame_before_spawn;
 };
 
 
@@ -274,7 +277,7 @@ struct GameData
 
 	_Porte Portes[3];
 
-	_Spawner Spawner;
+	_Spawner Spawners[2];
 
 	GameData() {}
 
@@ -393,9 +396,10 @@ void render()
 			G2D::DrawRectangle(Porte.Pos, Porte.Size, Color::Red, true);
 		}
 
-		//Affichage Spawner
-		G2D::DrawRectWithTexture(G.Spawner.IdTex, G.Spawner.Pos, G.Spawner.Size);
-			
+		//Affichage Spawners
+		for (int i = 0; i < sizeof G.Spawners / sizeof G.Spawners[0];i++) {
+			G2D::DrawRectWithTexture(G.Spawners[i].IdTex, G.Spawners[i].Pos, G.Spawners[i].Size);
+		}
 		
 		/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -553,12 +557,15 @@ void Logic()
 		}
 
 		//Spawn de Momies
-		if (G.n_frame % 1000 == 0) {
-			_Momie M;
-			M.IdTex = G2D::InitTextureFromString(M.Size, M.texture);
-			M.Size = M.Size * 1.5;
-			M.Pos = G.Spawner.Pos;
-			G.Momies.push_back(M);
+		for (int i = 0; i < sizeof G.Spawners / sizeof G.Spawners[0];i++) {
+			if (G.n_frame % G.Spawners[i].nb_frame_before_spawn == 0 && G.Spawners[i].nb_spawned < G.Spawners[i].max_spawn) {
+				_Momie M;
+				M.IdTex = G2D::InitTextureFromString(M.Size, M.texture);
+				M.Size = M.Size * 1.5;
+				M.Pos = G.Spawners[i].Pos;
+				G.Momies.push_back(M);
+				G.Spawners[i].nb_spawned++;
+			}
 		}
 
 		//Détection du game over
@@ -658,9 +665,22 @@ void AssetsInit()
 	   Porte.Size = V2(40, 40);
    }
 
-   G.Spawner.IdTex = G2D::InitTextureFromString(G.Spawner.Size, G.Spawner.texture);
-   G.Spawner.Size = G.Spawner.Size * 2;
-   
+
+   _Spawner Spawner1;
+   _Spawner Spawner2;
+
+   Spawner1.IdTex = G2D::InitTextureFromString(Spawner1.Size, Spawner1.texture);
+   Spawner1.Size = Spawner1.Size * 2;
+   Spawner1.Pos = V2(400, 45);
+   Spawner1.nb_frame_before_spawn = rand() % 100;
+
+   Spawner2.IdTex = G2D::InitTextureFromString(Spawner2.Size, Spawner2.texture);
+   Spawner2.Size = Spawner2.Size * 2;
+   Spawner2.Pos = V2(450, 450);
+   Spawner2.nb_frame_before_spawn = rand() % 100;
+
+   G.Spawners[0] = Spawner1;
+   G.Spawners[1] = Spawner2;
 }
 
 int main(int argc, char* argv[])
