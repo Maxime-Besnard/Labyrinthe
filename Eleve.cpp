@@ -672,12 +672,12 @@ void AssetsInit()
    Spawner1.IdTex = G2D::InitTextureFromString(Spawner1.Size, Spawner1.texture);
    Spawner1.Size = Spawner1.Size * 2;
    Spawner1.Pos = V2(400, 45);
-   Spawner1.nb_frame_before_spawn = rand() % 100;
+   Spawner1.nb_frame_before_spawn = rand() % 2000;
 
    Spawner2.IdTex = G2D::InitTextureFromString(Spawner2.Size, Spawner2.texture);
    Spawner2.Size = Spawner2.Size * 2;
    Spawner2.Pos = V2(450, 450);
-   Spawner2.nb_frame_before_spawn = rand() % 100;
+   Spawner2.nb_frame_before_spawn = rand() % 2000;
 
    G.Spawners[0] = Spawner1;
    G.Spawners[1] = Spawner2;
