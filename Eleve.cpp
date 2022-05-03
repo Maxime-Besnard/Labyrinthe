@@ -201,6 +201,14 @@ struct _Diamand
 	V2 Pos = V2(450, 130);
 };
 
+struct _Porte 
+{
+	V2 Pos;
+	V2 Size;
+	bool isClosed=false;
+	int direction_fermeture; // 0:se ferme vers le haut | 1:vers le bas | 2:vers la droite | 3:vers la gauche
+};
+
 
 struct GameData
 {
@@ -241,6 +249,8 @@ struct GameData
 	_Pistolet Pistolet;
 
 	_Diamand Diamand;
+
+	_Porte Portes[3];
 
 	GameData() {}
 
@@ -341,11 +351,22 @@ void render()
 		}
 		else {
 			G2D::DrawRectWithTexture(G.Pistolet.IdTexGauche, G.Pistolet.Pos, G.Pistolet.Size);
-		}
-		
+		}		
 
 		//Affichage Dimand
 		G2D::DrawRectWithTexture(G.Diamand.IdTex, G.Diamand.Pos, G.Diamand.Size);
+
+		//Affichage Porte
+		for (_Porte Porte : G.Portes) {
+			if (Porte.isClosed) {
+				Porte.Size = V2(40, 0);
+			}
+			else {
+				Porte.Size = V2(40, 40);
+			}
+			G2D::DrawRectangle(Porte.Pos, Porte.Size, Color::Red, true);
+		}
+			
 		
 		/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -505,6 +526,16 @@ void Logic()
 			G.Ecran = 3;
 			G.time = G2D::ElapsedTimeFromStartSeconds();
 		}
+
+		//Gestion aléatoire fermeture des portes
+		if (G.n_frame % 500 == 0) {
+			for (_Porte &Porte : G.Portes) {
+				int nb_rand = rand() % 2;
+				if (nb_rand == 1) { Porte.isClosed = true; }
+				else { Porte.isClosed = false; }
+			}
+			
+		}
 	}
 
 	//Partie gagnée
@@ -559,6 +590,14 @@ void AssetsInit()
 
    G.Diamand.IdTex = G2D::InitTextureFromString(G.Diamand.Size, G.Diamand.texture);
    G.Diamand.Size = G.Diamand.Size * 1;
+
+   G.Portes[0].Pos = V2(80, 80);
+   G.Portes[1].Pos = V2(120, 400);
+   G.Portes[2].Pos = V2(160, 40);
+   for (_Porte Porte : G.Portes) {
+	   Porte.Size = V2(40, 40);
+   }
+   
 }
 
 int main(int argc, char* argv[])
