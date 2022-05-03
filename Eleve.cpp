@@ -149,6 +149,24 @@ struct _Momie
 	V2 Pos = V2(35, 240);
 };
 
+struct _Pistolet
+{
+	string texture =
+		"[  MMMMMMMMMMMGGMM   ]"
+		"[  MMMMMMMMMMMMMMMM  ]"
+		"[  MMMMMMMMMMMMMGMG  ]"
+		"[  GGGGGGGGMGGGGGGG  ]"
+		"[          G  GGPG   ]"
+		"[           GGGPPPG  ]"
+		"[              GPPPG ]"
+		"[               GPPG ]"
+		"[               GGG  ]";
+
+	V2 Size;
+	int IdTex;
+	V2 Pos = V2(500, 45);
+};
+
 
 struct GameData
 {
@@ -186,6 +204,8 @@ struct GameData
 
 	int n_frame = 0;
 	int last_direction = 1; // 0 : left | 1:right
+
+	_Pistolet Pistolet;
 
 	GameData() {}
 
@@ -274,6 +294,9 @@ void render()
 		G2D::DrawRectWithTexture(G.Momies_tab[0].IdTex, G.Momies_tab[0].Pos, G.Momies_tab[0].Size);
 		G2D::DrawRectWithTexture(G.Momies_tab[1].IdTex, G.Momies_tab[1].Pos, G.Momies_tab[1].Size);
 		G2D::DrawRectWithTexture(G.Momies_tab[2].IdTex, G.Momies_tab[2].Pos, G.Momies_tab[2].Size);
+
+		// Affichage Pistolet
+		G2D::DrawRectWithTexture(G.Pistolet.IdTex, G.Pistolet.Pos, G.Pistolet.Size);
 		
 		/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
 		G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) + 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -465,7 +488,8 @@ void AssetsInit()
    G.Momies_tab[2].Size = G.Momies_tab[2].Size * 1.5;
    G.Momies_tab[2].Pos = V2(320, 240);
 
-   
+   G.Pistolet.IdTex = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture);
+   G.Pistolet.Size = G.Pistolet.Size * 1;
 }
 
 int main(int argc, char* argv[])
