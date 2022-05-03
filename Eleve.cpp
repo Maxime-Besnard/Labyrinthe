@@ -286,7 +286,7 @@ void render()
 
 	//Partie gagnée
 	if (G.Ecran == 2) {
-		G2D::DrawStringFontMono(V2(100, 300), "WIN", 60, 4, Color::Green);
+		G2D::DrawStringFontMono(V2(200, 300), "WIN", 60, 4, Color::Green);
 		G2D::DrawRectangle(V2(0, 0), V2(0, 0), Color::Black, true);
 	}
 
