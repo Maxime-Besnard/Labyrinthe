@@ -149,6 +149,7 @@ struct _Momie
 	V2 Size;
 	int IdTex;
 	V2 Pos = V2(35, 240);
+	int direction=0;
 };
 
 struct _Pistolet
@@ -210,6 +211,27 @@ struct _Porte
 	int direction_fermeture; // 0:se ferme vers le haut | 1:vers le bas | 2:vers la droite | 3:vers la gauche
 };
 
+struct _Spawner
+{
+	string texture =
+		"[PP PP PP PP]"
+		"[PPPPPPPPPPP]"
+		"[PPPPPPPPPPP]"
+		"[PPPPPPPPPPP]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]"
+		"[ PPPPPPPPP ]";
+	V2 Pos =  V2(400,45);
+	int IdTex;
+	V2 Size;
+};
+
 
 struct GameData
 {
@@ -239,8 +261,7 @@ struct GameData
 	_Heros Heros;   // data du héros
 	_Key   Key;
 	_Chest Chest;
-	_Momie Momies_tab[3];
-	int direction_init[3] = { 2,1,3 };
+	vector<_Momie> Momies;
 
 	int Ecran = 0;
 	int time = 0;
@@ -253,6 +274,8 @@ struct GameData
 
 	_Porte Portes[3];
 
+	_Spawner Spawner;
+
 	GameData() {}
 
 };
@@ -262,9 +285,8 @@ GameData G;
 
 void render()
 {
-	G2D::ClearScreen(Color::Black);
 
-	std::cout << isPorteClosed(4, 1)<<"\n";
+	G2D::ClearScreen(Color::Black);
 
 	//Ecran d'accueil
 	if (G.Ecran == 0) {
@@ -276,7 +298,6 @@ void render()
 
 	//Partie en cours
 	if (G.Ecran == 1) {
-
 		for (int x = 0; x < 15; x++)
 			for (int y = 0; y < 15; y++)
 			{
@@ -336,12 +357,14 @@ void render()
 
 		// affichage de la clef
 		G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
+
+		//Affichage Coffre
 		G2D::DrawRectWithTexture(G.Chest.IdTex, G.Chest.Pos, G.Chest.Size);
-		
+
 		//Affichage des momies
-		G2D::DrawRectWithTexture(G.Momies_tab[0].IdTex, G.Momies_tab[0].Pos, G.Momies_tab[0].Size);
-		G2D::DrawRectWithTexture(G.Momies_tab[1].IdTex, G.Momies_tab[1].Pos, G.Momies_tab[1].Size);
-		G2D::DrawRectWithTexture(G.Momies_tab[2].IdTex, G.Momies_tab[2].Pos, G.Momies_tab[2].Size);
+		for (auto &Momie : G.Momies) {
+			G2D::DrawRectWithTexture(Momie.IdTex, Momie.Pos, Momie.Size);
+		}
 
 		// Affichage Pistolet
 		if (G.Heros.Inventaire.Pistolet) {
@@ -369,6 +392,9 @@ void render()
 			}
 			G2D::DrawRectangle(Porte.Pos, Porte.Size, Color::Red, true);
 		}
+
+		//Affichage Spawner
+		G2D::DrawRectWithTexture(G.Spawner.IdTex, G.Spawner.Pos, G.Spawner.Size);
 			
 		
 		/*G2D::DrawRectangle(V2((int(G.Heros.Pos.x / 40) - 1) * 40, int(G.Heros.Pos.y / 40) * 40), V2(40, 40), Color::Red);
@@ -417,6 +443,8 @@ void Logic()
 		G.Key = k;
 		G.Chest = c;
 
+		vector<_Momie> New_Momies;
+		G.Momies = New_Momies;
 		AssetsInit();
 
 		G.Ecran = 1;
@@ -460,8 +488,8 @@ void Logic()
 		}
 
 		//Collision avec la momie
-		for (int i = 0; i < 3; i++) {
-			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Momies_tab[i].Pos.x, G.Momies_tab[i].Pos.y, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x)) {
+		for (auto &Momie: G.Momies) {
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, Momie.Pos.x, Momie.Pos.y, Momie.Size.y, Momie.Size.x)) {
 				G.Heros.vies -= 1;
 				G.Heros.Pos = V2(45, 45);
 			}
@@ -485,43 +513,52 @@ void Logic()
 		}
 
 		// Déplacement des Momies
-		for (int i = 0; i < 3; i++) {
+		for (auto &Momie : G.Momies) {
 
-			if ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) - 1) * 40, int(G.Momies_tab[i].Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40) - 1, G.Momies_tab[i].Pos.y / 40) || (G.Mur((G.Momies_tab[i].Pos.x / 40) - 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) - 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
+			if ((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, (int(Momie.Pos.x / 40) - 1) * 40, int(Momie.Pos.y / 40) * 40, 40, 40)) && G.Mur((Momie.Pos.x / 40) - 1, Momie.Pos.y / 40) || (G.Mur((Momie.Pos.x / 40) - 1, (Momie.Pos.y / 40) + 1) && ((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, (int(Momie.Pos.x / 40) - 1) * 40, int(Momie.Pos.y / 40 + 1) * 40, 40, 40)))))
 			{
-				G.Momies_tab[i].Pos.x++;
-				G.direction_init[i] = rand_direction();
+				Momie.Pos.x++;
+				Momie.direction = rand_direction();
 			}
 			else {
-				if (G.direction_init[i] == 0) { { G.Momies_tab[i].Pos.x--; } }
+				if (Momie.direction == 0) { { Momie.Pos.x--; } }
 			}
 
-			if ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
+			if ((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, (int(Momie.Pos.x / 40) + 1) * 40, int(Momie.Pos.y / 40) * 40, 40, 40)) && G.Mur((Momie.Pos.x / 40) + 1, (Momie.Pos.y / 40)) || (G.Mur((Momie.Pos.x / 40) + 1, (Momie.Pos.y / 40) + 1) && ((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, (int(Momie.Pos.x / 40) + 1) * 40, int(Momie.Pos.y / 40 + 1) * 40, 40, 40)))))
 			{
-				G.Momies_tab[i].Pos.x--;
-				G.direction_init[i] = rand_direction();
+				Momie.Pos.x--;
+				Momie.direction = rand_direction();
 			}
 			else {
-				if (G.direction_init[i] == 1) { { G.Momies_tab[i].Pos.x++; } }
+				if (Momie.direction == 1) { { Momie.Pos.x++; } }
 			}
 
-			if (((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, int(G.Momies_tab[i].Pos.x / 40) * 40, (int(G.Momies_tab[i].Pos.y / 40) + 1) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40), (G.Momies_tab[i].Pos.y / 40) + 1)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) + 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 + 1) * 40, 40, 40)))))
+			if (((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, int(Momie.Pos.x / 40) * 40, (int(Momie.Pos.y / 40) + 1) * 40, 40, 40)) && G.Mur((Momie.Pos.x / 40), (Momie.Pos.y / 40) + 1)) || (G.Mur((Momie.Pos.x / 40) + 1, (Momie.Pos.y / 40) + 1) && ((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, (int(Momie.Pos.x / 40) + 1) * 40, int(Momie.Pos.y / 40 + 1) * 40, 40, 40)))))
 			{
-				G.Momies_tab[i].Pos.y--;
-				G.direction_init[i] = rand_direction();
+				Momie.Pos.y--;
+				Momie.direction = rand_direction();
 			}
 			else {
-				if (G.direction_init[i] == 2) { { G.Momies_tab[i].Pos.y++; } }
+				if (Momie.direction == 2) { { Momie.Pos.y++; } }
 			}
 
-			if (((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, int(G.Momies_tab[i].Pos.x / 40) * 40, (int(G.Momies_tab[i].Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((G.Momies_tab[i].Pos.x / 40), (G.Momies_tab[i].Pos.y / 40) - 1)) || (G.Mur((G.Momies_tab[i].Pos.x / 40) + 1, (G.Momies_tab[i].Pos.y / 40) - 1) && ((InterRectRect(G.Momies_tab[i].Pos, G.Momies_tab[i].Size.y, G.Momies_tab[i].Size.x, (int(G.Momies_tab[i].Pos.x / 40) + 1) * 40, int(G.Momies_tab[i].Pos.y / 40 - 1) * 40, 40, 40)))))
+			if (((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, int(Momie.Pos.x / 40) * 40, (int(Momie.Pos.y / 40) - 1) * 40, 40, 40)) && G.Mur((Momie.Pos.x / 40), (Momie.Pos.y / 40) - 1)) || (G.Mur((Momie.Pos.x / 40) + 1, (Momie.Pos.y / 40) - 1) && ((InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, (int(Momie.Pos.x / 40) + 1) * 40, int(Momie.Pos.y / 40 - 1) * 40, 40, 40)))))
 			{
-				G.Momies_tab[i].Pos.y++;
-				G.direction_init[i] = rand_direction();
+				Momie.Pos.y++;
+				Momie.direction = rand_direction();
 			}
 			else {
-				if (G.direction_init[i] == 3) { { G.Momies_tab[i].Pos.y--; } }
+				if (Momie.direction == 3) { { Momie.Pos.y--; } }
 			}
+		}
+
+		//Spawn de Momies
+		if (G.n_frame % 1000 == 0) {
+			_Momie M;
+			M.IdTex = G2D::InitTextureFromString(M.Size, M.texture);
+			M.Size = M.Size * 1.5;
+			M.Pos = G.Spawner.Pos;
+			G.Momies.push_back(M);
 		}
 
 		//Détection du game over
@@ -575,17 +612,37 @@ void AssetsInit()
    G.Chest.IdTex = G2D::InitTextureFromString(G.Chest.Size, G.Chest.texture);
    G.Chest.Size = G.Chest.Size * 2;
 
-   G.Momies_tab[0].IdTex = G2D::InitTextureFromString(G.Momies_tab[0].Size, G.Momies_tab[0].texture);
-   G.Momies_tab[0].Size = G.Momies_tab[0].Size * 1.5;
-   G.Momies_tab[0].Pos = V2(45, 240);
+   //G.Momies[0].IdTex = G2D::InitTextureFromString(G.Momies[0].Size, G.Momies[0].texture);
+   //G.Momies[0].Size = G.Momies[0].Size * 1.5;
+   //G.Momies[0].Pos = V2(45, 240);
 
-   G.Momies_tab[1].IdTex = G2D::InitTextureFromString(G.Momies_tab[1].Size, G.Momies_tab[1].texture);
-   G.Momies_tab[1].Size = G.Momies_tab[1].Size * 1.5;
-   G.Momies_tab[1].Pos = V2(200, 240);
+   //G.Momies[1].IdTex = G2D::InitTextureFromString(G.Momies[1].Size, G.Momies[1].texture);
+   //G.Momies[1].Size = G.Momies[1].Size * 1.5;
+   //G.Momies[1].Pos = V2(200, 240);
 
-   G.Momies_tab[2].IdTex = G2D::InitTextureFromString(G.Momies_tab[2].Size, G.Momies_tab[2].texture);
-   G.Momies_tab[2].Size = G.Momies_tab[2].Size * 1.5;
-   G.Momies_tab[2].Pos = V2(320, 240);
+   //G.Momies[2].IdTex = G2D::InitTextureFromString(G.Momies[2].Size, G.Momies[2].texture);
+   //G.Momies[2].Size = G.Momies[2].Size * 1.5;
+   //G.Momies[2].Pos = V2(320, 240);
+   _Momie Momie1;
+   _Momie Momie2;
+   _Momie Momie3;
+
+   Momie1.IdTex = G2D::InitTextureFromString(Momie1.Size, Momie1.texture);
+   Momie1.Size = Momie1.Size * 1.5;
+   Momie1.Pos = V2(45, 240);
+
+   Momie2.IdTex = G2D::InitTextureFromString(Momie2.Size, Momie2.texture);
+   Momie2.Size = Momie2.Size * 1.5;
+   Momie2.Pos = V2(200, 240);
+
+   Momie3.IdTex = G2D::InitTextureFromString(Momie3.Size, Momie3.texture);
+   Momie3.Size = Momie3.Size * 1.5;
+   Momie3.Pos = V2(320, 240);
+
+   G.Momies.push_back(Momie1);
+   G.Momies.push_back(Momie2);
+   G.Momies.push_back(Momie3);
+
 
    G.Pistolet.IdTexGauche = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_gauche);
    G.Pistolet.IdTexDroite = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_droite);
@@ -600,6 +657,9 @@ void AssetsInit()
    for (_Porte Porte : G.Portes) {
 	   Porte.Size = V2(40, 40);
    }
+
+   G.Spawner.IdTex = G2D::InitTextureFromString(G.Spawner.Size, G.Spawner.texture);
+   G.Spawner.Size = G.Spawner.Size * 2;
    
 }
 
@@ -608,7 +668,7 @@ int main(int argc, char* argv[])
 
 	G2D::InitWindow(argc,argv,V2(G.Lpix * 15, G.Lpix * 15), V2(200,200), string("Labyrinthe"));
 	  
-	AssetsInit();
+	//AssetsInit();
 
 	G2D::Run(Logic,render);
  
