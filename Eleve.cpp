@@ -120,20 +120,19 @@ struct _Key
 struct _Chest {
 
 	string texture =
-		"[                      ]"
-		"[       PPPPPPPP       ]"
-		"[     PPPPPPPPPPPP     ]"
-		"[   PPPPPPPPPPPPPPPP   ]"
-		"[   PPPPPPPPPPPPPPPP   ]"
-		"[   PPPPPPOOOOOPPPPP   ]"
-		"[   PPPPPPOOOOOPPPPP   ]"
-		"[   PPPPPPOOOOOPPPPP   ]"
-		"[   PPPPPPPOOOPPPPPP   ]"
-		"[   PPPPPPPOOOPPPPPP   ]"
-		"[   PPPPPPPPPPPPPPPP   ]"
-		"[   PPPPPPPPPPPPPPPP   ]"
-		"[   PPPPPPPPPPPPPPPP   ]"
-		"[   PPPPPPPPPPPPPPPP   ]";
+		"[APRRRPAAPRRRPA]"
+		"[OPRRRPOOPRRRPO]"
+		"[DPZZZPDDPZZZPD]"
+		"[DPZZZPDDPZZZPD]"
+		"[OPRRRPOOPRRRPO]"
+		"[OPRRDDDDDDRRPO]"
+		"[OPPPOOOOOOPPPO]"
+		"[OOOOOOZZOOOOOO]"
+		"[AAAAOOZZOOAAAA]"
+		"[OPPPOOOOOOPPPO]"
+		"[OPRROOOOOORRPO]"
+		"[OPPPPPPPPPPPPO]"
+		"[OOOOOOOOOOOOOO]";
 
 	V2 Size;
 	int IdTex;
@@ -809,7 +808,7 @@ void AssetsInit()
 	G.Key.Size = G.Key.Size * 1.5; // on peut zoomer la taille du sprite
 
 	G.Chest.IdTex = G2D::InitTextureFromString(G.Chest.Size, G.Chest.texture);
-	G.Chest.Pos = V2(35, 530);
+	G.Chest.Pos = V2(43, 530);
 	G.Chest.Size = G.Chest.Size * 2;
 
 	_Momie Momie1;
