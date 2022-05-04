@@ -147,8 +147,8 @@ struct _Momie
 		"[      PPPPPPPP        ]"
 		"[     PPPPPPPPPP       ]"
 		"[     PPPPPPPPPP       ]"
-		"[     P     PPPP       ]"
-		"[     PPW WPPPPP       ]"
+		"[     PKKKKKPPPP       ]"
+		"[     PPWKWPPPPP       ]"
 		"[      PPPPPPPP        ]"
 		"[       PPPPPP         ]"
 		"[        PPPPPP        ]"
@@ -350,7 +350,7 @@ struct GameData
 
 	_CheckPoint CheckPoints[3];
 
-	_Porte Portes[4];
+	_Porte Portes[6];
 	_Spawner Spawners[2];
 
 	int Score = 10000;
@@ -872,6 +872,8 @@ void AssetsInit()
 	G.Portes[1].Pos = V2(120, 400);
 	G.Portes[2].Pos = V2(160, 40);
 	G.Portes[3].Pos = V2(160,520);
+	G.Portes[4].Pos = V2(200, 480);
+	G.Portes[5].Pos = V2(200, 160);
 
 	for (_Porte Porte : G.Portes) {
 	   Porte.Size = V2(40, 40);
