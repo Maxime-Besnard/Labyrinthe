@@ -32,7 +32,7 @@ struct _Inventaire {
 	bool Key;
 	bool Munition;
 	bool Pistolet;
-	bool Diamant;
+	int nb_diamants;
 };
  
 struct _Heros
@@ -329,7 +329,7 @@ struct GameData
 	_Pistolet Pistolet;
 	_Munition Munition;
 
-	_Diamant Diamant;
+	_Diamant Diamants[3];
 
 	_CheckPoint CheckPoints[3];
 
@@ -425,7 +425,7 @@ void render()
 		G.n_frame++;
 
 		// affichage de la clef
-		G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
+		if(G.Heros.Inventaire.nb_diamants == 3)	G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
 
 		//Affichage du coffre
 		G2D::DrawRectWithTexture(G.Chest.IdTex, G.Chest.Pos, G.Chest.Size);
@@ -462,7 +462,10 @@ void render()
 		}
 
 		//Affichage du diamant
-		G2D::DrawRectWithTexture(G.Diamant.IdTex, G.Diamant.Pos, G.Diamant.Size);
+		for (_Diamant Diamant : G.Diamants) {
+			G2D::DrawRectWithTexture(Diamant.IdTex, Diamant.Pos, Diamant.Size);
+		}
+		
 
 
 		//Affichage des portes
@@ -714,6 +717,19 @@ void Logic()
 			}
 		}
 
+		//Collision avec les Diamants
+		for (_Diamant &Diamant : G.Diamants) {
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, Diamant.Pos.x, Diamant.Pos.y, Diamant.Size.y, Diamant.Size.x)) {
+				G.Heros.Inventaire.nb_diamants+=1;
+				if (G.Heros.Inventaire.nb_diamants == 1) Diamant.Pos = V2(250, 570);
+				else if(G.Heros.Inventaire.nb_diamants == 2) Diamant.Pos = V2(270, 570);
+				else Diamant.Pos = V2(290, 570);
+				
+			}
+		}
+		
+		std::cout << G.Heros.Inventaire.nb_diamants;
+
 		//Détection du game over
 		if (G.Heros.vies < 1) {
 			G.Ecran = 3;
@@ -756,7 +772,7 @@ void AssetsInit()
 	G.Heros.Inventaire.Key = false;
 	G.Heros.Inventaire.Munition = false;
 	G.Heros.Inventaire.Pistolet = false;
-	G.Heros.Inventaire.Diamant = false;
+	G.Heros.Inventaire.nb_diamants = 0;
 
 	G.Key.IdTex = G2D::InitTextureFromString(G.Key.Size, G.Key.texture);
 	G.Key.Pos = V2(40, 200);
@@ -799,8 +815,20 @@ void AssetsInit()
 	G.Munition.active = false;
 	G.Munition.direction = 1;
 
-	G.Diamant.IdTex = G2D::InitTextureFromString(G.Diamant.Size, G.Diamant.texture);
-	G.Diamant.Pos = V2(450, 130);
+	_Diamant Diamant1;
+	_Diamant Diamant2;
+	_Diamant Diamant3;
+
+	Diamant1.IdTex = G2D::InitTextureFromString(Diamant1.Size, Diamant1.texture);
+	Diamant1.Pos = V2(120, 100);
+	Diamant2.IdTex = G2D::InitTextureFromString(Diamant2.Size, Diamant2.texture);
+	Diamant2.Pos = V2(120, 120);
+	Diamant3.IdTex = G2D::InitTextureFromString(Diamant3.Size, Diamant3.texture);
+	Diamant3.Pos = V2(120, 140);
+
+	G.Diamants[0] = Diamant1;
+	G.Diamants[1] = Diamant2;
+	G.Diamants[2] = Diamant3;
 
 	G.CheckPoints[0].Pos = V2(40, 40);
 	G.CheckPoints[0].Size = V2(40, 40);
