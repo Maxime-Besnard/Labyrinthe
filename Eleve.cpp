@@ -351,10 +351,10 @@ struct GameData
 
 	_CheckPoint CheckPoints[3];
 
-	_Porte Portes[3];
+	_Porte Portes[4];
 	_Spawner Spawners[2];
 
-	int Score = 0;
+	int Score = 10000;
 
 	GameData() {}
 
@@ -452,7 +452,7 @@ void render()
 		G.n_frame++;
 
 		// affichage de la clef
-		if(G.Heros.Inventaire.nb_diamants == 3)	G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
+		G2D::DrawRectWithTexture(G.Key.IdTex, G.Key.Pos, G.Key.Size);
 
 		//Affichage du coffre
 		G2D::DrawRectWithTexture(G.Chest.IdTex, G.Chest.Pos, G.Chest.Size);
@@ -559,6 +559,11 @@ void Logic()
 
 	//Partie en cours
 	if (G.Ecran == 1) {
+
+		//Décrémentation du Score pendant l'avancement de la partie
+		if (G.n_frame % 200 == 0) {
+			G.Score -= 50;
+		}
 
 		//Déplacements du heros
 		if (!isCollisionGauche(G.Heros.Pos.x, G.Heros.Pos.y, G.Heros.Size.x, G.Heros.Size.y)) {
@@ -751,12 +756,12 @@ void Logic()
 				if (G.Heros.Inventaire.nb_diamants == 1) Diamant.Pos = V2(250, 570);
 				else if(G.Heros.Inventaire.nb_diamants == 2) Diamant.Pos = V2(270, 570);
 				else Diamant.Pos = V2(290, 570);
-				
+				G.Score += 500;
 			}
 		}
 
 		//Détection du game over
-		if (G.Heros.vies < 1) {
+		if (G.Heros.vies < 1 || G.Score <= 0) {
 			G.Ecran = 3;
 			G.time = G2D::ElapsedTimeFromStartSeconds();
 		}
@@ -800,11 +805,11 @@ void AssetsInit()
 	G.Heros.Inventaire.nb_diamants = 0;
 
 	G.Key.IdTex = G2D::InitTextureFromString(G.Key.Size, G.Key.texture);
-	G.Key.Pos = V2(40, 200);
+	G.Key.Pos = V2(520, 140);
 	G.Key.Size = G.Key.Size * 1.5; // on peut zoomer la taille du sprite
 
 	G.Chest.IdTex = G2D::InitTextureFromString(G.Chest.Size, G.Chest.texture);
-	G.Chest.Pos = V2(35, 120);
+	G.Chest.Pos = V2(35, 530);
 	G.Chest.Size = G.Chest.Size * 2;
 
 	_Momie Momie1;
@@ -832,11 +837,11 @@ void AssetsInit()
 
 	G.Pistolet.IdTexGauche = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_gauche);
 	G.Pistolet.IdTexDroite = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_droite);
-	G.Pistolet.Pos = V2(130, 70);
+	G.Pistolet.Pos = V2(280, 360);
 
 	G.Munition.IdTexDroite = G2D::InitTextureFromString(G.Munition.Size, G.Munition.texture_droite);
 	G.Munition.IdTexGauche = G2D::InitTextureFromString(G.Munition.Size, G.Munition.texture_gauche);
-	G.Munition.Pos = V2(50, 80);
+	G.Munition.Pos = V2(530, 200);
 	G.Munition.active = false;
 	G.Munition.direction = 1;
 
@@ -845,11 +850,11 @@ void AssetsInit()
 	_Diamant Diamant3;
 
 	Diamant1.IdTex = G2D::InitTextureFromString(Diamant1.Size, Diamant1.texture);
-	Diamant1.Pos = V2(120, 100);
+	Diamant1.Pos = V2(250, 300);
 	Diamant2.IdTex = G2D::InitTextureFromString(Diamant2.Size, Diamant2.texture);
-	Diamant2.Pos = V2(120, 120);
+	Diamant2.Pos = V2(340, 50);
 	Diamant3.IdTex = G2D::InitTextureFromString(Diamant3.Size, Diamant3.texture);
-	Diamant3.Pos = V2(120, 140);
+	Diamant3.Pos = V2(540, 540);
 
 	G.Diamants[0] = Diamant1;
 	G.Diamants[1] = Diamant2;
@@ -867,6 +872,7 @@ void AssetsInit()
 	G.Portes[0].Pos = V2(80, 80);
 	G.Portes[1].Pos = V2(120, 400);
 	G.Portes[2].Pos = V2(160, 40);
+	G.Portes[3].Pos = V2(160,520);
 
 	for (_Porte Porte : G.Portes) {
 	   Porte.Size = V2(40, 40);
