@@ -291,6 +291,24 @@ struct _Spawner
 	int nb_frame_before_spawn;
 };
 
+struct _Heart
+{
+	string texture =
+		"[  RR   RR  ]"
+		"[ RRRR RRRR ]"
+		"[RRWWRRRRRRR]"
+		"[RRWRRRRRRRR]"
+		"[RRRRRRRRRRR]"
+		"[ RRRRRRRRR ]"
+		"[  RRRRRRR  ]"
+		"[   RRRRR   ]"
+		"[    RRR    ]"
+		"[     R     ]";
+	V2 Pos;
+	V2 Size;
+	int IdTex;
+};
+
 struct GameData
 {
 
@@ -336,6 +354,8 @@ struct GameData
 	_Porte Portes[3];
 	_Spawner Spawners[2];
 
+	int Score = 0;
+
 	GameData() {}
 
 };
@@ -377,7 +397,14 @@ void render()
 		}
 
 		//Affichage des vies restantes
-		G2D::DrawStringFontMono(V2(40, 570), "Vies : " + std::to_string(G.Heros.vies), 20, 2, Color::Red);
+		_Heart Heart;
+		Heart.Pos = V2(40, 570);
+		Heart.IdTex = G2D::InitTextureFromString(Heart.Size, Heart.texture);
+		G2D::DrawRectWithTexture(Heart.IdTex,Heart.Pos,Heart.Size*2);
+		G2D::DrawStringFontMono(V2(70, 572),std::to_string(G.Heros.vies), 20, 2, Color::Red);
+
+		//Affichage Score
+		G2D::DrawStringFontMono(V2(420, 570), "Score:" + std::to_string(G.Score), 20, 2, Color::Yellow);
 
 
 		// affichage et animation du héros
@@ -604,13 +631,12 @@ void Logic()
 			}
 		}
 
-		//Collision avec la momie
+		//Collision Héros avec une momie
 		for (auto& Momie : G.Momies) {
 			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, Momie.Pos.x, Momie.Pos.y, Momie.Size.y, Momie.Size.x)) {
 				Mort();
 			}
 		}
-
 
 		//Collision avec le pistolet
 		if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Pistolet.Pos.x, G.Pistolet.Pos.y, G.Pistolet.Size.y, G.Pistolet.Size.x)) {
@@ -648,7 +674,7 @@ void Logic()
 		}
 		else {
 			for (auto& Momie : G.Momies) {
-				//Une momie reçoit la munition tirée
+				//Une momie reçoit la munition tirée ==> +500 points
 				if (InterRectRect(Momie.Pos, Momie.Size.y, Momie.Size.x, G.Munition.Pos.x, G.Munition.Pos.y, G.Munition.Size.y, G.Munition.Size.x)) {
 					G.Munition.active = false;
 					G.Munition.Size = V2(0, 0);
@@ -656,6 +682,7 @@ void Logic()
 					Momie.active = false;
 					Momie.Size = V2(0, 0);
 					Momie.Pos = V2(0, 0);
+					G.Score += 1000;
 				}
 			}
 		}
@@ -727,8 +754,6 @@ void Logic()
 				
 			}
 		}
-		
-		std::cout << G.Heros.Inventaire.nb_diamants;
 
 		//Détection du game over
 		if (G.Heros.vies < 1) {
