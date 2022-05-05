@@ -286,7 +286,7 @@ struct _Spawner
 	V2 Size;
 	int IdTex;
 	int Momies;
-	int MomiesMax = 3;
+	int MomiesMax;
 	int nb_frame_before_spawn;
 };
 
@@ -353,7 +353,12 @@ struct GameData
 	_Porte Portes[6];
 	_Spawner Spawners[2];
 
-	int Score = 10000;
+	int Score;
+	int Difficulte = 2;
+	int SelectMenu = 1;
+	int SelectDifficulte = 1;
+	int isPressed = 0;
+	int Page = 1;
 
 	GameData() {}
 
@@ -370,8 +375,30 @@ void render()
 	if (G.Ecran == 0) {
 
 		G2D::DrawStringFontMono(V2(100, 500), "Labyrinthe", 60, 5, Color::Blue);
-		G2D::DrawStringFontMono(V2(130, 450), "Press Enter", 50, 4, Color::White);
-		G2D::DrawRectangle(V2(100, 100), V2(40, 40), Color::Black, true);
+		G2D::DrawStringFontMono(V2(250, 350), "JEU", 50, 4, Color::White);
+		G2D::DrawStringFontMono(V2(190, 250), "OPTIONS", 50, 4, Color::White);
+		G2D::DrawStringFontMono(V2(210, 150), "REGLES", 50, 4, Color::White);
+		G2D::DrawRectangle(V2(100, 100), V2(0, 0), Color::Black, true);
+
+		if (G.SelectMenu == 1) {
+			G2D::DrawRectangle(V2(100, 330), V2(420, 70), Color::Red);
+		}
+		else {
+			G2D::DrawRectangle(V2(100, 330), V2(420, 70), Color::White);
+		}
+		if (G.SelectMenu == 2) {
+			G2D::DrawRectangle(V2(100, 230), V2(420, 70), Color::Red);
+		}
+		else {
+			G2D::DrawRectangle(V2(100, 230), V2(420, 70), Color::White);
+		}
+		if (G.SelectMenu == 3) {
+			G2D::DrawRectangle(V2(100, 130), V2(420, 70), Color::Red);
+		}
+		else {
+			G2D::DrawRectangle(V2(100, 130), V2(420, 70), Color::White);
+		}
+		
 	}
 
 	//Partie en cours
@@ -530,6 +557,77 @@ void render()
 		G2D::DrawStringFontMono(V2(100, 300), "GAME OVER", 60, 4, Color::Red);
 		G2D::DrawRectangle(V2(0, 0), V2(0, 0), Color::Black, true);
 	}
+
+	//Options
+	if (G.Ecran == 5) {
+
+		G2D::DrawStringFontMono(V2(160, 500), "Options", 60, 5, Color::Blue);
+		G2D::DrawStringFontMono(V2(210, 350), "FACILE", 50, 4, Color::White);
+		G2D::DrawStringFontMono(V2(210, 250), "NORMAL", 50, 4, Color::White);
+		G2D::DrawStringFontMono(V2(150, 150), "DIFFICILE", 50, 4, Color::White);
+		G2D::DrawRectangle(V2(100, 100), V2(0, 0), Color::Black, true);
+
+		if (G.SelectDifficulte == 1) {
+			G2D::DrawRectangle(V2(100, 330), V2(420, 70), Color::Red);
+		}
+		else {
+			G2D::DrawRectangle(V2(100, 330), V2(420, 70), Color::White);
+		}
+		if (G.SelectDifficulte == 2) {
+			G2D::DrawRectangle(V2(100, 230), V2(420, 70), Color::Red);
+		}
+		else {
+			G2D::DrawRectangle(V2(100, 230), V2(420, 70), Color::White);
+		}
+		if (G.SelectDifficulte == 3) {
+			G2D::DrawRectangle(V2(100, 130), V2(420, 70), Color::Red);
+		}
+		else {
+			G2D::DrawRectangle(V2(100, 130), V2(420, 70), Color::White);
+		}
+	}	
+
+	//Regles
+	if (G.Ecran == 6) {
+		G2D::DrawStringFontMono(V2(140, 500), "Regles", 60, 5, Color::Blue);
+
+		//Page 1
+		if (G.Page == 1) {
+			G2D::DrawStringFontMono(V2(450, 500), "1/2", 40, 5, Color::White);
+			G2D::DrawStringFontMono(V2(40, 440), "Bienvenue dans Labyrinthe.", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 400), "Dans ce jeu, votre but est de recuperer", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 380), "la clef afin d'ouvir le coffre.", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 340), "Attention cependant aux nombreux pieges", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 320), "et momies si vous ne voulez pas perdre", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 300), "de vies et de points.", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 260), "Surveillez egalement les murs rouges", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 240), "qui apparaissent et disparaissent sans", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 220), "prevenir si vous ne voulez pas rester", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 200), "coince.", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 160), "Vous perdez la partie si votre nombre", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 140), "de vies restantes ou votre score", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 120), "atteignent zero.", 20, 2, Color::White);
+			G2D::DrawStringFontMono(V2(40, 80), "Utilisez les fleches gauche et droite", 20, 2, Color::Red);
+			G2D::DrawStringFontMono(V2(40, 60), "pour changer de page et la touche ENTER", 20, 2, Color::Red);
+			G2D::DrawStringFontMono(V2(40, 40), "pour revenir au menu principal.", 20, 2, Color::Red);
+		}
+
+		//Page 2
+		if (G.Page == 2) {
+		G2D::DrawStringFontMono(V2(450, 500), "2/2", 40, 5, Color::White);
+		G2D::DrawStringFontMono(V2(40, 440), "Divers objets sont disponibles pour", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 420), "vous aider a survivre et a ameliorer", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 400), "votre score.", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 360), "Servez-vous des cases vertes ou les", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 340), "momies ne peuvent pas entrer et qui", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 320), "vous serviront de point de reapparition.", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 280), "Les spawners feront apparaitre plus de", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 260), "momies avec le temps.", 20, 2, Color::White);
+		G2D::DrawStringFontMono(V2(40, 80), "Utilisez les fleches gauche et droite", 20, 2, Color::Red);
+		G2D::DrawStringFontMono(V2(40, 60), "pour changer de page et la touche ENTER", 20, 2, Color::Red);
+		G2D::DrawStringFontMono(V2(40, 40), "pour revenir au menu principal.", 20, 2, Color::Red);
+		}
+	}
 	  
 	G2D::Show();
 }
@@ -538,29 +636,63 @@ void render()
 void Logic()
 {
 
-	//Ecran d'accueil
-	if (G.Ecran == 0) {
-		if (G2D::IsKeyPressed(Key::ENTER)) {
-			G.Ecran = 4;
-		}
+	if (!(G2D::IsKeyPressed(Key::DOWN) || G2D::IsKeyPressed(Key::UP) || G2D::IsKeyPressed(Key::ENTER))) {
+		G.isPressed = 0;
 	}
 
-	//Initialisation
-	if (G.Ecran == 4) {
-		
-		vector<_Momie> m;
-		G.Momies = m;
+	//Ecran d'accueil
+	if (G.Ecran == 0) {
 
-		AssetsInit();
+		if (G2D::IsKeyPressed(Key::ENTER) && G.isPressed == 0) {
+			if (G.SelectMenu == 1) {
+				G.Ecran = 4;
+			}
+			if (G.SelectMenu == 2) {
+				G.Ecran = 5;
+			}
+			if (G.SelectMenu == 3) {
+				G.Ecran = 6;
+			}
+			G.isPressed = 1;
+		}
 
-		G.Ecran = 1;
+		if (G.SelectMenu == 1 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::DOWN)) {
+				G.SelectMenu = 2;
+				G.isPressed = 1;
+			}
+			if (G2D::IsKeyPressed(Key::UP)) {
+				G.SelectMenu = 3;
+				G.isPressed = 1;
+			}
+		}
+		else if (G.SelectMenu == 2 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::DOWN)) {
+				G.SelectMenu = 3;
+				G.isPressed = 1;
+			}
+			if (G2D::IsKeyPressed(Key::UP)) {
+				G.SelectMenu = 1;
+				G.isPressed = 1;
+			}
+		}
+		else if (G.SelectMenu == 3 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::DOWN)) {
+				G.SelectMenu = 1;
+				G.isPressed = 1;
+			}
+			if (G2D::IsKeyPressed(Key::UP)) {
+				G.SelectMenu = 2;
+				G.isPressed = 1;
+			}
+		}
 	}
 
 	//Partie en cours
 	if (G.Ecran == 1) {
 
 		//Décrémentation du Score pendant l'avancement de la partie
-		if (G.n_frame % 200 == 0) {
+		if (G.n_frame % 200 == 0 && G.n_frame != 0) {
 			G.Score -= 50;
 		}
 
@@ -686,7 +818,7 @@ void Logic()
 					Momie.active = false;
 					Momie.Size = V2(0, 0);
 					Momie.Pos = V2(0, 0);
-					G.Score += 1000;
+					G.Score += 500;
 				}
 			}
 		}
@@ -766,19 +898,89 @@ void Logic()
 		}
 	}
 
-	//Partie gagnée
+	//Partie gagnee
 	if (G.Ecran == 2) {
 
-		if (G2D::ElapsedTimeFromStartSeconds() - G.time > 3) {
+		if (G2D::ElapsedTimeFromStartSeconds() - G.time > 3 || G2D::IsKeyPressed(Key::ENTER)) {
 			G.Ecran = 0;
+			G.isPressed = 1;
 		}
 	}
 
 	//Partie perdue
 	if (G.Ecran == 3) {
 
-		if (G2D::ElapsedTimeFromStartSeconds() - G.time > 3) {
+		if (G2D::ElapsedTimeFromStartSeconds() - G.time > 3 || G2D::IsKeyPressed(Key::ENTER)) {
 			G.Ecran = 0;
+			G.isPressed = 1;
+		}
+	}
+
+	//Initialisation
+	if (G.Ecran == 4) {
+		AssetsInit();
+		G.Ecran = 1;
+	}
+
+	//Options
+	if (G.Ecran == 5) {
+
+		if (G2D::IsKeyPressed(Key::ENTER) && G.isPressed == 0) {
+			G.Difficulte = G.SelectDifficulte;
+			G.Ecran = 0;
+			G.isPressed = 1;
+		}
+
+		if (G.SelectDifficulte == 1 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::DOWN)) {
+				G.SelectDifficulte = 2;
+				G.isPressed = 1;
+			}
+			if (G2D::IsKeyPressed(Key::UP)) {
+				G.SelectDifficulte = 3;
+				G.isPressed = 1;
+			}
+		}
+		else if (G.SelectDifficulte == 2 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::DOWN)) {
+				G.SelectDifficulte = 3;
+				G.isPressed = 1;
+			}
+			if (G2D::IsKeyPressed(Key::UP)) {
+				G.SelectDifficulte = 1;
+				G.isPressed = 1;
+			}
+		}
+		else if (G.SelectDifficulte == 3 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::DOWN)) {
+				G.SelectDifficulte = 1;
+				G.isPressed = 1;
+			}
+			if (G2D::IsKeyPressed(Key::UP)) {
+				G.SelectDifficulte = 2;
+				G.isPressed = 1;
+			}
+		}
+	}
+
+	//Regles
+	if (G.Ecran == 6) {
+		if (G2D::IsKeyPressed(Key::ENTER) && G.isPressed == 0) {
+			G.Ecran = 0;
+			G.isPressed = 1;
+		}
+
+		if (G.Page == 1 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::RIGHT)) {
+				G.Page = 2;
+				G.isPressed = 1;
+			}
+		}
+		if (G.Page == 2 && G.isPressed == 0) {
+			if (G2D::IsKeyPressed(Key::LEFT)) {
+				G.Page = 1;
+				G.isPressed = 1;
+			}
 		}
 	}
 
@@ -811,6 +1013,9 @@ void AssetsInit()
 	G.Chest.Pos = V2(43, 530);
 	G.Chest.Size = G.Chest.Size * 2;
 
+	vector<_Momie> m;
+	G.Momies = m;
+
 	_Momie Momie1;
 	_Momie Momie2;
 	_Momie Momie3;
@@ -831,8 +1036,12 @@ void AssetsInit()
 	Momie3.active = true;
 
 	G.Momies.push_back(Momie1);
-	G.Momies.push_back(Momie2);
-	G.Momies.push_back(Momie3);
+	if (G.Difficulte > 1) {
+		G.Momies.push_back(Momie2);
+	}
+	if (G.Difficulte > 2) {
+		G.Momies.push_back(Momie3);
+	}
 
 	G.Pistolet.IdTexGauche = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_gauche);
 	G.Pistolet.IdTexDroite = G2D::InitTextureFromString(G.Pistolet.Size, G.Pistolet.texture_droite);
@@ -887,15 +1096,20 @@ void AssetsInit()
 	Spawner1.Pos = V2(400, 45);
 	Spawner1.nb_frame_before_spawn = frameBeforeSpawn();
 	Spawner1.Momies = 0;
+	Spawner1.MomiesMax = G.Difficulte;
 
 	Spawner2.IdTex = G2D::InitTextureFromString(Spawner2.Size, Spawner2.texture);
 	Spawner2.Size = Spawner2.Size * 2;
 	Spawner2.Pos = V2(450, 450);
 	Spawner2.nb_frame_before_spawn = frameBeforeSpawn();
 	Spawner2.Momies = 0;
+	Spawner2.MomiesMax = G.Difficulte;
+
 
 	G.Spawners[0] = Spawner1;
 	G.Spawners[1] = Spawner2;
+
+	G.Score = 1500;
    
 }
 
@@ -952,12 +1166,13 @@ bool isCheckPoint(int x, int y) {
 	int pos_vertical = y * 40;
 
 	for (_CheckPoint& CheckPoint : G.CheckPoints) {
+
 		if (CheckPoint.Pos.x == pos_horizontal && CheckPoint.Pos.y == pos_vertical) {
 			return true;
 		}
-
-		return false;
 	}
+
+	return false;
 }
 
 //Detecte si un objet est bloque vers la gauche
@@ -1221,5 +1436,6 @@ int frameBeforeSpawn() {
 //Actions a executer lorsque le heros meurt
 void Mort() {
 	G.Heros.vies -= 1;
+	G.Score -= 300;
 	G.Heros.Pos = G.Heros.last_checkpoint;
 }
