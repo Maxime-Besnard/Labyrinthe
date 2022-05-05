@@ -308,6 +308,86 @@ struct _Heart
 	int IdTex;
 };
 
+struct _Case_Capteur {
+	string textureCapteur =
+		"[AAAAAAAA]"
+		"[AAAAAAAA]"
+		"[AAAAAAAA]"
+		"[AAAAAAAA]"
+		"[AAAAAAAA]"
+		"[AAAAAAAA]"
+		"[AAAAAAAA]"
+		"[AAAAAAAA]";
+
+	string textureLaser =
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]"
+		"[R R R R R R R R R R ]";
+	V2 PosCapteur;
+	V2 SizeCapteur;
+	int IdTexCapteur;
+
+	V2 PosLaser;
+	V2 SizeLaser;
+	int IdTexLaser;
+	bool laser_actif=false;
+	bool heros_detecte = false;
+};
+
+struct _Fleche
+{
+	string texture =
+		"[    KKKKK                KKKKKKKKK]"
+		"[   KZZZK                KOOKOOKOK ]"
+		"[  KZZZK                KKKKOOKOK  ]"
+		"[ KZZZKKKKKKKKKKKKKKKKKKKKKKKKKKKKK]"
+		"[KZZZPPPPPPPPPPPPPPPPPPPPPPPPPPPPP ]"
+		"[KZZZPPPPPPPPPPPPPPPPPPPPPPPPPPPPP ]"
+		"[ KZZZKKKKKKKKKKKKKKKKKKKKKKKKKKKKK]"
+		"[  KZZZK                KOOKOOKOK  ]"
+		"[   KZZZK                KOOKOOKOK ]"
+		"[    KKKKK                KKKKKKKKK]";
+	V2 Pos;
+	V2 Size;
+	int IdTex;
+};
+
 struct GameData
 {
 
@@ -359,6 +439,10 @@ struct GameData
 	int SelectDifficulte = 1;
 	int isPressed = 0;
 	int Page = 1;
+
+	_Case_Capteur Capteur;
+
+	_Fleche Fleche;
 
 	GameData() {}
 
@@ -432,7 +516,6 @@ void render()
 		//Affichage Score
 		G2D::DrawStringFontMono(V2(420, 570), "Score:" + std::to_string(G.Score), 20, 2, Color::Yellow);
 
-
 		// affichage et animation du héros
 		//G2D::DrawRectangle(G.Heros.Pos, G.Heros.Size, Color::Red);
 		if (G2D::IsKeyPressed(Key::RIGHT)) {
@@ -487,6 +570,22 @@ void render()
 		for (auto& Momie : G.Momies) {
 			G2D::DrawRectWithTexture(Momie.IdTex, Momie.Pos, Momie.Size);
 		}
+
+		//Affichage Capteur et Laser
+		G2D::DrawRectWithTexture(G.Capteur.IdTexCapteur, G.Capteur.PosCapteur, G.Capteur.SizeCapteur);
+		// Clignottement du Laser : allumé 2 secondes, éteint 3 secondes
+		if (G.n_frame % 250 > 150) 
+		{
+			G2D::DrawRectWithTexture(G.Capteur.IdTexLaser, G.Capteur.PosLaser, G.Capteur.SizeLaser);
+			G.Capteur.laser_actif = true;
+		}
+		else 
+		{
+			G.Capteur.laser_actif = false;
+		}
+
+		//Affichage Flèche
+		G2D::DrawRectWithTexture(G.Fleche.IdTex, G.Fleche.Pos, G.Fleche.Size);
 
 		// Affichage du pistolet
 		if (G.Heros.Inventaire.Pistolet) {
@@ -779,6 +878,11 @@ void Logic()
 			G.Heros.Inventaire.Pistolet = true;
 		}
 
+		//Collision avec le Laser du Capteur
+		if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Capteur.PosLaser.x, G.Capteur.PosLaser.y, G.Capteur.SizeLaser.y, G.Capteur.SizeLaser.x) && G.Capteur.laser_actif) {
+			G.Capteur.heros_detecte=true;//le laser détecte le héros.
+		}
+
 		//Deplacements du pistolet
 		if (G.Heros.Inventaire.Pistolet) {
 			if (G.Heros.last_direction == 1) {
@@ -843,6 +947,17 @@ void Logic()
 			}
 		}
 
+		// Déplacement flèche lancée par le Laser
+		if (G.Capteur.heros_detecte) {
+			G.Fleche.Size = V2(27,7.5);
+			G.Fleche.Pos.x -= 2;
+			if (InterRectRect(G.Heros.Pos, G.Heros.Size.y, G.Heros.Size.x, G.Fleche.Pos.x, G.Fleche.Pos.y, G.Fleche.Size.y, G.Fleche.Size.x)) {
+				G.Fleche.Size = G.Fleche.Size * 0;
+				G.Fleche.Pos = V2(360, 55);//la flèche reprend sa position initiale
+				G.Capteur.heros_detecte = false;
+				Mort();
+			}
+		}
 
 		//Gestion aléatoire de la fermeture des portes
 		if (G.n_frame % 100 == 0) {
@@ -1105,9 +1220,19 @@ void AssetsInit()
 	Spawner2.Momies = 0;
 	Spawner2.MomiesMax = G.Difficulte;
 
-
 	G.Spawners[0] = Spawner1;
 	G.Spawners[1] = Spawner2;
+
+	G.Capteur.IdTexCapteur = G2D::InitTextureFromString(G.Capteur.SizeCapteur, G.Capteur.textureCapteur);
+	G.Capteur.SizeCapteur = G.Capteur.SizeCapteur * 1.5;
+	G.Capteur.PosCapteur = V2(270, 80);
+	G.Capteur.IdTexLaser = G2D::InitTextureFromString(G.Capteur.SizeLaser, G.Capteur.textureLaser);
+	G.Capteur.SizeLaser = G.Capteur.SizeLaser;
+	G.Capteur.PosLaser = V2(G.Capteur.PosCapteur.x-2,G.Capteur.PosCapteur.y-40);
+
+	G.Fleche.IdTex = G2D::InitTextureFromString(G.Fleche.Size, G.Fleche.texture);
+	G.Fleche.Size = G.Fleche.Size*0;
+	G.Fleche.Pos = V2(360, 55);
 
 	G.Score = 1500;
    
